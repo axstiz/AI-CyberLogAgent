@@ -84,3 +84,14 @@ jobs:
         env:
           # Prevent CI from triggering on its own push
           CI: true
+
+      # Финальная проверка: если ошибки были, завершаем с ошибкой
+      - name: Check for errors
+        run: |
+          if [ "$ERRORS_FOUND" = "1" ]; then
+            echo "\n\n❌ ОБНАРУЖЕНЫ ОШИБКИ, КОТОРЫЕ ТРЕБУЮТ ВНИМАНИЯ!\n"
+            echo "Пожалуйста, проверьте логи и исправьте указанные проблемы."
+            exit 1
+          else
+            echo "\n\n✅ Все проверки пройдены успешно!"
+          fi
