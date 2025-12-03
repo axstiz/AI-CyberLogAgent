@@ -2,13 +2,13 @@ name: Run Ruff Check + Fix Issues
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, dev ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, dev ]
   workflow_dispatch:  # Позволяет запускать вручную через интерфейс CI/CD
 
 jobs:
-  ruff-check-fix:
+  ruff-fix:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,119 +35,128 @@ jobs:
       - name: Run PEP 8 checks (E, W)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running PEP 8 checks (E, W) ==="
           # Сначала пытаемся исправить
-          ruff check . --select E,W --fix --show-fixes
+          ruff check . --select E,W --fix --show-fixes || true
           # Повторная проверка без --fix
-          if ruff check . --select E,W; then
-            echo "✅ PEP 8 checks passed after fix."
-          else
+          if ! ruff check . --select E,W; then
             echo "❌ PEP 8 checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ PEP 8 checks passed after fix."
           fi
 
       # === flake8 checks (F, I) ===
       - name: Run flake8 checks (F, I)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running flake8 checks (F, I) ==="
-          ruff check . --select F,I --fix --show-fixes
-          if ruff check . --select F,I; then
-            echo "✅ flake8 checks passed after fix."
-          else
+          ruff check . --select F,I --fix --show-fixes || true
+          if ! ruff check . --select F,I; then
             echo "❌ flake8 checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ flake8 checks passed after fix."
           fi
 
       # === flake8-bugbear checks (B) ===
       - name: Run flake8-bugbear checks (B)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running flake8-bugbear checks (B) ==="
-          ruff check . --select B --fix --show-fixes
-          if ruff check . --select B; then
-            echo "✅ flake8-bugbear checks passed after fix."
-          else
+          ruff check . --select B --fix --show-fixes || true
+          if ! ruff check . --select B; then
             echo "❌ flake8-bugbear checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ flake8-bugbear checks passed after fix."
           fi
 
       # === comprehension checks (C4) ===
       - name: Run comprehension checks (C4)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running comprehension checks (C4) ==="
-          ruff check . --select C4 --fix --show-fixes
-          if ruff check . --select C4; then
-            echo "✅ comprehension checks passed after fix."
-          else
+          ruff check . --select C4 --fix --show-fixes || true
+          if ! ruff check . --select C4; then
             echo "❌ comprehension checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ comprehension checks passed after fix."
           fi
 
       # === pyupgrade checks (UP) ===
       - name: Run pyupgrade checks (UP)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running pyupgrade checks (UP) ==="
-          ruff check . --select UP --fix --show-fixes
-          if ruff check . --select UP; then
-            echo "✅ pyupgrade checks passed after fix."
-          else
+          ruff check . --select UP --fix --show-fixes || true
+          if ! ruff check . --select UP; then
             echo "❌ pyupgrade checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ pyupgrade checks passed after fix."
           fi
 
       # === security checks (S) ===
       - name: Run security checks (bandit, S)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running security checks (bandit, S) ==="
-          ruff check . --select S --fix --show-fixes
-          if ruff check . --select S; then
-            echo "✅ security checks passed after fix."
-          else
+          ruff check . --select S --fix --show-fixes || true
+          if ! ruff check . --select S; then
             echo "❌ security checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ security checks passed after fix."
           fi
 
       # === docstring style checks (D) ===
       - name: Run docstring style checks (pydocstyle, D)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running docstring style checks (pydocstyle, D) ==="
-          ruff check . --select D --extend-ignore=D100 --fix --show-fixes
-          if ruff check . --select D --extend-ignore=D100; then
-            echo "✅ docstring checks passed after fix."
-          else
+          ruff check . --select D --extend-ignore=D100 --fix --show-fixes || true
+          if ! ruff check . --select D --extend-ignore=D100; then
             echo "❌ docstring checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ docstring checks passed after fix."
           fi
 
       # === import sorting checks (ISC) ===
       - name: Run import sorting checks (isort, ISC)
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Running import sorting checks (isort, ISC) ==="
-          ruff check . --select ISC --fix --show-fixes
-          if ruff check . --select ISC; then
-            echo "✅ import sorting checks passed after fix."
-          else
+          ruff check . --select ISC --fix --show-fixes || true
+          if ! ruff check . --select ISC; then
             echo "❌ import sorting checks FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ import sorting checks passed after fix."
           fi
 
       # === Format code ===
       - name: Format code with ruff
         continue-on-error: true
         run: |
+          set -o pipefail
           echo "=== Formatting code with ruff ==="
-          ruff format .
-          if ruff format . --check; then
-            echo "✅ Formatting passed."
-          else
+          ruff format . || true
+          if ! ruff format . --check; then
             echo "❌ Formatting FAILED after fix!"
             echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          else
+            echo "✅ Formatting passed."
           fi
 
       # Сбор изменений и коммит
@@ -178,39 +187,3 @@ jobs:
           else
             echo "\n\n✅ Все проверки пройдены успешно!"
           fi
-
-      # Вывод всех неисправленных ошибок
-      - name: Show all remaining errors
-        if: failure()
-        run: |
-          echo "\n\n📋 ПОДРОБНЫЙ ОТЧЁТ О НЕИСПРАВЛЕННЫХ ОШИБКАХ:\n"
-          echo "========================================"
-
-          echo "\n🔹 PEP 8 (E, W):"
-          ruff check . --select E,W --format=concise || echo "  No PEP 8 issues."
-
-          echo "\n🔹 flake8 (F, I):"
-          ruff check . --select F,I --format=concise || echo "  No flake8 issues."
-
-          echo "\n🔹 flake8-bugbear (B):"
-          ruff check . --select B --format=concise || echo "  No flake8-bugbear issues."
-
-          echo "\n🔹 Comprehensions (C4):"
-          ruff check . --select C4 --format=concise || echo "  No comprehension issues."
-
-          echo "\n🔹 pyupgrade (UP):"
-          ruff check . --select UP --format=concise || echo "  No pyupgrade issues."
-
-          echo "\n🔹 Security (S):"
-          ruff check . --select S --format=concise || echo "  No security issues."
-
-          echo "\n🔹 Docstrings (D):"
-          ruff check . --select D --extend-ignore=D100 --format=concise || echo "  No docstring issues."
-
-          echo "\n🔹 Import sorting (ISC):"
-          ruff check . --select ISC --format=concise || echo "  No import sorting issues."
-
-          echo "\n🔹 Formatting issues:"
-          ruff format . --check --diff || echo "  No formatting issues."
-
-          echo "\n✅ Проверка завершена. Исправьте указанные ошибки и запустите снова."
