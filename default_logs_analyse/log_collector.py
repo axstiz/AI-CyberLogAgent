@@ -1,7 +1,6 @@
 """
 Module for collecting logs from another application.
 """
-import os
 import shutil
 from pathlib import Path
 
