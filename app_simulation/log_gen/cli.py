@@ -26,13 +26,13 @@ def create_parser() -> argparse.ArgumentParser:
 Примеры использования:
 
   # Генерация 100 логов с настройками по умолчанию
-  python cli.py -o logs/output.log
+  python cli.py -o analyse_logs/output.log
 
   # Генерация с настройками
-  python cli.py -o logs/output.log -n 500 -e 0.2 -i 0.1
+  python cli.py -o analyse_logs/output.log -n 500 -e 0.2 -i 0.1
 
   # Использование конфигурационного файла
-  python cli.py -o logs/output.log -c config.json
+  python cli.py -o analyse_logs/output.log -c config.json
 
   # Создание шаблона конфигурации
   python cli.py --create-config my_config.json

@@ -1,4 +1,4 @@
-"""Module for collecting logs from neighboring directories (excluding self)."""
+"""Module for collecting analyse_logs from neighboring directories (excluding self)."""
 
 import shutil
 from pathlib import Path
@@ -22,9 +22,9 @@ def is_subpath_of(parent: Path, child: Path) -> bool:
 
 def collect_logs():
     """Collects log files from all directories adjacent to 'ai_cyberlogagent'
-    and copies them to the processed logs directory.
-    Does NOT collect logs from ai_cyberlogagent or its subdirectories.
-    Also ignores logs from app_simulation/log_gen/examples.
+    and copies them to the processed analyse_logs directory.
+    Does NOT collect analyse_logs from ai_cyberlogagent or its subdirectories.
+    Also ignores analyse_logs from app_simulation/log_gen/examples.
     """
     # Определяем путь к текущей директории проекта
     current_dir = Path(
@@ -109,7 +109,7 @@ def collect_logs():
         else:
             print(f"  ⚠️  SOURCE_LOG_PATH does not exist: {source_path}")
 
-    print(f"\n✅ Total logs collected: {collected_count}")
+    print(f"\n✅ Total analyse_logs collected: {collected_count}")
 
 
 def main():

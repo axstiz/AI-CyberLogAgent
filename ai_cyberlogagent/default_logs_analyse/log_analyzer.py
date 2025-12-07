@@ -1,4 +1,4 @@
-"""Module for analyzing collected logs using AI to understand the context
+"""Module for analyzing collected analyse_logs using AI to understand the context
 and detect incidents based on semantic meaning rather than just patterns.
 """
 
@@ -16,11 +16,10 @@ from settings_analyse import (
 )
 
 # Configure logging
-os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("logs/analyzer.log"), logging.StreamHandler()],
+    handlers=[logging.FileHandler("analyzer.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 

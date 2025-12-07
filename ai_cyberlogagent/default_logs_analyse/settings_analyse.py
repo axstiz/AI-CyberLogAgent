@@ -1,9 +1,9 @@
 """Settings for the log analysis module."""
 
-# Path to collect logs from
+# Path to collect analyse_logs from
 SOURCE_LOG_PATH = "./"
 
-# Path to store processed logs
+# Path to store processed analyse_logs
 PROCESSED_LOG_PATH = "collected_logs"
 
 # Path to store incidents
@@ -18,7 +18,7 @@ INCIDENT_KEYWORDS = ["ERROR", "CRITICAL", "EXCEPTION", "FATAL", "WARNING"]
 # File encoding
 LOG_FILE_ENCODING = "utf-8"
 
-# Batch size for processing logs
+# Batch size for processing analyse_logs
 BATCH_SIZE = 100
 
 # Paths to ignore during log collection

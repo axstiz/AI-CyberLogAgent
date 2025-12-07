@@ -5,17 +5,17 @@ SALT = bcrypt.gensalt(rounds=12)
 
 
 def collect_logs():
-    """Collect logs from the specified directory."""
+    """Collect analyse_logs from the specified directory."""
     print("Logs collected\n")  # ЗАГЛУШКА >>>
 
 
 def hide_logs():
-    """Hide the logs from view."""
+    """Hide the analyse_logs from view."""
     print("Logs hidden\n")
 
 
 def show_logs():
-    """Display the logs."""
+    """Display the analyse_logs."""
     print("Logs shown\n")  # ЗАГЛУШКА >>>
 
 

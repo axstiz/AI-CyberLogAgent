@@ -4,9 +4,9 @@ from ai_cyberlogagent.config import commands
 
 # Dictionary of available commands
 AVAILABLE_COMMANDS = {
-    "collect_logs": "Collect system logs",
-    "show_logs": "Show logs",
-    "hide_logs": "Hide logs",
+    "collect_logs": "Collect system analyse_logs",
+    "show_logs": "Show analyse_logs",
+    "hide_logs": "Hide analyse_logs",
     "get_history": "Get incident history",
     "register": "Register a new user or modify an existing one",
 }

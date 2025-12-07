@@ -19,7 +19,7 @@ python -m log_gen.cli --config log_gen/configs/realistic_mixed.json --output my_
 
 ### 1. Реалистичная смесь (рекомендуется для начала)
 ```bash
-python -m log_gen.cli --config log_gen/configs/realistic_mixed.json --output logs.log
+python -m log_gen.cli --config log_gen/configs/realistic_mixed.json --output analyse_logs.log
 ```
 **Результат:** Сбалансированная смесь всех типов Apache логов
 
@@ -88,7 +88,7 @@ python -m log_gen.cli --config my_config.json --output custom.log
 
 ```bash
 # Показать статистику генерации
-python -m log_gen.cli --config log_gen/configs/realistic_mixed.json -n 100 --show-stats --output logs.log
+python -m log_gen.cli --config log_gen/configs/realistic_mixed.json -n 100 --show-stats --output analyse_logs.log
 
 # Сгенерировать только инциденты определённого типа
 python -m log_gen.cli -o incidents.log -n 50 --incident-only memory_leak

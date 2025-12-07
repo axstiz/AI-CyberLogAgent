@@ -459,7 +459,7 @@ python -m log_gen.config_loader
 python -m log_gen.cli --create-config my_config.json
 
 # Сгенерировать логи с конфигурацией
-python -m log_gen.cli --config my_config.json --output logs/output.log
+python -m log_gen.cli --config my_config.json --output analyse_logs/output.log
 ```
 
 ### Через Python код

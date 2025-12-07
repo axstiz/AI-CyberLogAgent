@@ -31,7 +31,7 @@ python -m log_gen.cli --preview -n 50
 
 ```bash
 # Реалистичная смешанная (рекомендуется)
-python -m log_gen.cli --config log_gen/configs/realistic_mixed.json --output logs.log
+python -m log_gen.cli --config log_gen/configs/realistic_mixed.json --output analyse_logs.log
 
 # Симуляция атаки
 python -m log_gen.cli --config log_gen/configs/attack.json --output attack.log

@@ -6,17 +6,17 @@ from log_collector import main as collect_main
 
 def run_pipeline():
     """Runs the complete log analysis pipeline:
-    1. Collect logs from source
-    2. Analyze collected logs for incidents
+    1. Collect analyse_logs from source
+    2. Analyze collected analyse_logs for incidents
     """
     print("=== Log Analysis Pipeline Started ===\n")
 
-    # Step 1: Collect logs
+    # Step 1: Collect analyse_logs
     collect_main()
 
     print("\n")
 
-    # Step 2: Analyze logs
+    # Step 2: Analyze analyse_logs
     analyze_main()
 
     print("\n=== Log Analysis Pipeline Completed ===")
