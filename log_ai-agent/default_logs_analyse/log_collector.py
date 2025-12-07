@@ -3,7 +3,7 @@
 import shutil
 from pathlib import Path
 
-from settings_analyse import (
+from settings import (
     IGNORED_PATHS,
     LOG_FILE_PATTERN,
     PROCESSED_LOG_PATH,
@@ -21,16 +21,16 @@ def is_subpath_of(parent: Path, child: Path) -> bool:
 
 
 def collect_logs():
-    """Collects log files from all directories adjacent to 'ai_cyberlogagent'
+    """Collects log files from all directories adjacent to 'log_ai-agent'
     and copies them to the processed analyse_logs directory.
-    Does NOT collect analyse_logs from ai_cyberlogagent or its subdirectories.
+    Does NOT collect analyse_logs from log_ai-agent or its subdirectories.
     Also ignores analyse_logs from app_simulation/log_gen/examples.
     """
     # Определяем путь к текущей директории проекта
     current_dir = Path(
         __file__
-    ).parent.parent  # ai_cyberlogagent/default_logs_analyse → ai_cyberlogagent
-    parent_dir = current_dir.parent  # Родитель ai_cyberlogagent
+    ).parent.parent  # log_ai-agent/default_logs_analyse → log_ai-agent
+    parent_dir = current_dir.parent  # Родитель log_ai-agent
 
     # Paths to ignore
     ignored_paths = [parent_dir / ignore for ignore in IGNORED_PATHS]
@@ -43,12 +43,12 @@ def collect_logs():
 
     collected_count = 0
 
-    # Проходим по всем элементам на уровне родителя
-    for sibling in parent_dir.iterdir():
-        if sibling.is_dir() and sibling != current_dir:
-            print(f"\n📂 Checking directory: {sibling.name}")
-            # Ищем все лог-файлы по шаблону в соседней папке и подпапках
-            log_files = sibling.rglob(LOG_FILE_PATTERN)
+    # Проходим по всем элементам на уровне родителя, включая файлы в корне
+    for item in parent_dir.iterdir():
+        if item.is_dir() and item != current_dir:
+            print(f"\n📂 Checking directory: {item.name}")
+            # Собираем логи из поддиректорий
+            log_files = item.rglob(LOG_FILE_PATTERN)
             for log_file in log_files:
                 try:
                     # Пропускаем, если файл в одном из игнорируемых путей
@@ -66,12 +66,40 @@ def collect_logs():
                     if ignored:
                         continue
 
-                    target_file = processed_path / f"{sibling.name}__{log_file.name}"
+                    target_file = processed_path / f"{item.name}__{log_file.name}"
                     shutil.copy2(log_file, target_file)
                     print(f"  ✅ Collected: {log_file.relative_to(parent_dir)}")
                     collected_count += 1
                 except Exception as e:
                     print(f"  ❌ Failed to collect {log_file.name}: {e}")
+
+    # Ищем лог-файлы непосредственно в корне проекта
+    print(f"\n<📂> Checking root: ")
+    root_log_files = parent_dir.glob(LOG_FILE_PATTERN)
+    for log_file in root_log_files:
+        if log_file.is_file():
+            try:
+                # Проверяем, не находится ли файл в игнорируемых путях
+                log_resolved = log_file.resolve()
+                ignored = any(
+                    is_subpath_of(ignore_path, log_resolved)
+                    for ignore_path in ignored_paths
+                )
+                if ignored:
+                    rel_part = (
+                        log_file.relative_to(ignore_path)
+                        if ignore_path != log_file
+                        else log_file.name
+                    )
+                    print(f"  ⚠️  Ignored (in {ignore_path.name}): {rel_part}")
+                    continue
+
+                target_file = processed_path / f"root__{log_file.name}"
+                shutil.copy2(log_file, target_file)
+                print(f"  ✅ Collected: {log_file.name}")
+                collected_count += 1
+            except Exception as e:
+                print(f"  ❌ Failed to collect {log_file.name}: {e}")
 
     # Обработка SOURCE_LOG_PATH, если задан
     if SOURCE_LOG_PATH:
@@ -79,7 +107,7 @@ def collect_logs():
         if source_path.exists():
             print(f"\n🔍 Checking custom source path: {source_path}")
 
-            # Проверяем, не находится ли SOURCE_LOG_PATH внутри ai_cyberlogagent
+            # Проверяем, не находится ли SOURCE_LOG_PATH внутри log_ai-agent
             source_in_ignored = any(
                 is_subpath_of(ignore_path, source_path.resolve())
                 for ignore_path in ignored_paths
