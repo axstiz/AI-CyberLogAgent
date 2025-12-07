@@ -74,7 +74,7 @@ def collect_logs():
                     print(f"  ❌ Failed to collect {log_file.name}: {e}")
 
     # Ищем лог-файлы непосредственно в корне проекта
-    print(f"\n<📂> Checking root: ")
+    print("\n<📂> Checking root: ")
     root_log_files = parent_dir.glob(LOG_FILE_PATTERN)
     for log_file in root_log_files:
         if log_file.is_file():
