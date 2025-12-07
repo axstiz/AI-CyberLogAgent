@@ -1,7 +1,7 @@
 """Main module to run the complete log analysis pipeline."""
 
-from .log_analyzer import main as analyze_main
-from .log_collector import main as collect_main
+from log_analyzer import main as analyze_main
+from log_collector import main as collect_main
 
 
 def run_pipeline():

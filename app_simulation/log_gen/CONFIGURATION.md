@@ -466,7 +466,7 @@ python -m log_gen.cli --config my_config.json --output logs/output.log
 
 ```python
 from pathlib import Path
-from log_gen import ConfigLoader, LogGenerator
+from app_simulation.log_gen import ConfigLoader, LogGenerator
 
 # Загрузить конфигурацию
 config = ConfigLoader.load_from_json("my_config.json")

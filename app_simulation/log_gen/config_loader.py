@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from log_gen import GeneratorConfig, IncidentType, LogType
+from app_simulation.log_gen import GeneratorConfig, IncidentType, LogType
 
 
 class ConfigLoader:

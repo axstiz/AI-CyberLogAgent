@@ -594,11 +594,11 @@ class LogGenerator:
         return "\n".join(log.format() for log in self.logs)
 
 
-def main() -> None:
+def log_generation() -> None:
     """Пример использования генератора логов."""
     # Создаём конфигурацию
     config = GeneratorConfig(
-        log_count=50,
+        log_count=50000,
         error_probability=0.2,
         incident_probability=0.1,
         time_increment_seconds=(5, 20),
@@ -623,4 +623,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    log_generation()

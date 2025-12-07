@@ -6,7 +6,7 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from log_gen import (
+from app_simulation.log_gen import (
     GeneratorConfig,
     IncidentType,
     LogGenerator,

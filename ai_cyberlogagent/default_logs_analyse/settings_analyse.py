@@ -1,7 +1,7 @@
 """Settings for the log analysis module."""
 
 # Path to collect logs from
-SOURCE_LOG_PATH = "../other_project/logs/"
+SOURCE_LOG_PATH = "./"
 
 # Path to store processed logs
 PROCESSED_LOG_PATH = "collected_logs"

@@ -146,7 +146,7 @@ log_gen/
 ### Простой пример
 
 ```python
-from log_gen import LogGenerator, GeneratorConfig, IncidentType
+from app_simulation.log_gen import LogGenerator, GeneratorConfig, IncidentType
 
 # Создание конфигурации
 config = GeneratorConfig(
@@ -170,7 +170,7 @@ print(log_text)
 ### Генерация специфичных инцидентов
 
 ```python
-from log_gen import LogGenerator, IncidentType
+from app_simulation.log_gen import LogGenerator, IncidentType
 
 generator = LogGenerator()
 
