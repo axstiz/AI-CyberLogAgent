@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from log_ai_agent.config import commands
 
 # Загрузка переменных окружения из .env файла
-env_path = Path(__file__).parent / '.env'
+env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 # Настройка логирования
