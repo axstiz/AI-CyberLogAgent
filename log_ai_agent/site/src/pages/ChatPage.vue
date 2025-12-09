@@ -4,36 +4,41 @@
       <!-- Окно чата на всю высоту -->
       <div class="flex-1 flex flex-col bg-dark-900/30 border-l border-dark-800 overflow-hidden">
         <!-- История чата с фиксированной высотой и скроллом -->
-        <div ref="chatContainer" class="flex-1 overflow-y-auto space-y-4 p-4 scrollbar-chat">
+        <div ref="chatContainer" class="flex-1 overflow-y-auto space-y-8 pt-8 px-4 pb-4 scrollbar-chat">
           <div
             v-for="(msg, index) in messages"
             :key="index"
-            :class="['flex', msg.role === 'user' ? 'justify-end' : 'justify-start']"
+            class="flex justify-center"
           >
-            <div
-              :class="[
-                'max-w-xs px-4 py-3 rounded-xl shadow-lg',
-                msg.role === 'user'
-                  ? 'bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-br-none'
-                  : 'bg-dark-800/80 backdrop-blur-xl border border-dark-700 text-dark-200 rounded-bl-none',
-              ]"
-            >
-              <p class="text-sm leading-relaxed">{{ msg.text }}</p>
+            <div class="max-w-2xl w-full">
+              <!-- Сообщение пользователя - облачко справа от области агента -->
+              <div
+                v-if="msg.role === 'user'"
+                class="flex justify-end"
+              >
+                <div class="max-w-md px-4 py-3 rounded-xl shadow-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-br-none">
+                  <p class="text-sm leading-relaxed">{{ msg.text }}</p>
+                </div>
+              </div>
+              
+              <!-- Сообщение агента - сплошной текст с подписью -->
+              <div v-else>
+                <p class="text-base leading-relaxed text-dark-200 text-left">{{ msg.text }}</p>
+                <p class="text-xs text-dark-500 mt-2 text-left">AI Cyber Log</p>
+              </div>
             </div>
           </div>
-          <div v-if="isLoading" class="flex justify-start">
-            <div class="bg-dark-800/80 backdrop-blur-xl border border-dark-700 px-4 py-3 rounded-xl rounded-bl-none shadow-lg">
-              <div class="flex gap-1">
-                <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0ms"/>
-                <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 150ms"/>
-                <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 300ms"/>
-              </div>
+          <div v-if="isLoading" class="flex justify-center">
+            <div class="flex gap-1">
+              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0ms"/>
+              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 150ms"/>
+              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 300ms"/>
             </div>
           </div>
         </div>
 
         <!-- Быстрые вопросы (компактные плашки над полем ввода) -->
-        <div class="flex flex-wrap gap-2 px-4 py-2 mt-4">
+        <div class="flex flex-wrap gap-2 px-4 pt-2 pb-1 mt-4">
           <button
             @click="selectQuickQuestion('Сколько критичных инцидентов за последнее время?')"
             class="px-3 py-1.5 bg-dark-800/50 hover:bg-dark-800 border border-dark-700 hover:border-primary-500/50 rounded-lg text-xs text-dark-300 hover:text-primary-400 transition-all flex items-center gap-1.5"
