@@ -143,7 +143,7 @@ AVAILABLE_COMMANDS = {
     "get_history": "Получить историю инцидентов",
     "register": "Зарегистрировать нового пользователя или изменить существующего",
     "help": "Показать справку",
-    "interactive": "Запустить консоль CLI",
+    "interactive": "Запустить консоль",
     "exit": "Выйти из консоли",
 }
 
@@ -157,14 +157,7 @@ def show_help():
     print("-" * 60)
     for cmd, description in AVAILABLE_COMMANDS.items():
         print(f"  {cmd:15} - {description}")
-    print("\nИспользование:")
-    print("  python app.py <команда>           # Режим одной команды")
-    print("  python app.py interactive         # Консоль")
-    print("  python app.py --help")
-    print("\nПримеры:")
-    print("  python app.py collect_logs")
-    print("  python app.py register")
-    print("  python app.py interactive         # Запустить консоль")
+    print("\n")
     print("=" * 60 + "\n")
 
 
