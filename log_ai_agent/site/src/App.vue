@@ -11,7 +11,7 @@
       <main 
         :class="[
           'flex-1 transition-all duration-300',
-          appStore.sidebarCollapsed ? 'ml-20' : 'ml-64'
+          appStore.sidebarCollapsed ? 'ml-20' : 'ml-20 sm:ml-64'
         ]"
       >
         <RouterView />

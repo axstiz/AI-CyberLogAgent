@@ -12,13 +12,13 @@
     <div class="w-full max-w-md relative z-10">
       <!-- Логотип -->
       <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-4">
+        <div class="flex items-center justify-center gap-3 mb-4 pb-2">
           <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-2xl shadow-primary-500/50 animate-glow">
             <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <h1 class="text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent">CyberLog</h1>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent leading-relaxed pb-1">CyberLog</h1>
         </div>
         <p class="text-dark-400 text-sm">AI-powered система мониторинга инцидентов</p>
       </div>

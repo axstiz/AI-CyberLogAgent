@@ -2,7 +2,7 @@
   <aside 
     :class="[
       'fixed left-0 top-0 h-screen bg-dark-900/80 backdrop-blur-xl border-r border-dark-800 pt-6 flex flex-col transition-all duration-300',
-      isCollapsed ? 'w-20' : 'w-64'
+      isCollapsed ? 'w-20' : 'w-20 sm:w-64'
     ]"
   >
     <!-- Кнопка сворачивания -->
@@ -39,6 +39,7 @@
         <span 
           :class="[
             'bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent whitespace-nowrap transition-opacity duration-300',
+            isCollapsed || 'hidden sm:block',
             isCollapsed ? 'opacity-0 w-0' : 'opacity-100'
           ]"
         >
@@ -55,7 +56,7 @@
         :to="item.to"
         :class="[
           'nav-link',
-          isCollapsed ? 'justify-center' : ''
+          isCollapsed ? 'justify-center' : 'justify-center sm:justify-start'
         ]"
         :title="isCollapsed ? item.label : ''"
       >
@@ -63,6 +64,7 @@
         <span 
           :class="[
             'transition-opacity duration-300 whitespace-nowrap',
+            isCollapsed || 'hidden sm:inline',
             isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
           ]"
         >
@@ -72,10 +74,11 @@
     </nav>
 
     <!-- Профиль -->
-    <div :class="['mt-auto py-3 mb-3', isCollapsed ? 'px-2' : 'px-4 mx-3']">
+    <div :class="['mt-auto py-3 mb-3', isCollapsed || 'px-2 sm:px-4 sm:mx-3', isCollapsed && 'px-2']">
       <div 
         :class="[
-          'mb-3 pb-2.5 border-b border-dark-700/50 transition-opacity duration-300',
+          'mb-3 pb-2.5 border-b border-dark-700/50 transition-all duration-300',
+          isCollapsed || 'hidden sm:block',
           isCollapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'
         ]"
       >
@@ -86,17 +89,20 @@
       <button
         @click="logout"
         :class="[
-          'w-full flex items-center justify-center bg-dark-800/50 hover:bg-danger-500/10 text-dark-300 hover:text-danger-400 rounded-lg transition-all duration-200 border border-dark-700/50 hover:border-danger-500/50 group',
-          isCollapsed ? 'p-1.5' : 'gap-2 px-3 py-2'
+          'w-full flex items-center justify-center bg-dark-800/50 hover:bg-danger-500/10 text-dark-300 hover:text-danger-400 rounded-lg transition-all duration-300 border border-dark-700/50 hover:border-danger-500/50 group overflow-hidden',
+          isCollapsed ? 'p-1.5' : 'p-1.5 sm:gap-2 sm:px-3 sm:py-2'
         ]"
-        :title="isCollapsed ? 'Выйти из системы' : ''"
+        :title="isCollapsed || 'sm' ? 'Выйти из системы' : ''"
       >
         <svg class="w-5 h-5 transition-transform group-hover:translate-x-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
         <span 
           v-if="!isCollapsed"
-          class="text-xs font-medium whitespace-nowrap"
+          :class="[
+            'text-xs font-medium whitespace-nowrap hidden sm:inline transition-opacity duration-300 delay-100',
+            isCollapsed ? 'opacity-0' : 'opacity-100'
+          ]"
         >
           Выйти из системы
         </span>

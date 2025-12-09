@@ -19,7 +19,7 @@ git clone https://gitverse.ru/mitoshi_team/AI-CyberLogAgent
 docker compose up -d
 ```
 
-4. Переходим на сайт (домен указывается в `.env`)
+4. Переходим на сайт (порт указывается в `.env`)
 
 ```bash
 http://localhost:{FRONTEND_PORT}/
