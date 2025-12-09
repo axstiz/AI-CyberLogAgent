@@ -4,36 +4,41 @@
       <!-- Окно чата на всю высоту -->
       <div class="flex-1 flex flex-col bg-dark-900/30 border-l border-dark-800 overflow-hidden">
         <!-- История чата с фиксированной высотой и скроллом -->
-        <div ref="chatContainer" class="flex-1 overflow-y-auto space-y-4 p-4 scrollbar-chat">
+        <div ref="chatContainer" class="flex-1 overflow-y-auto space-y-8 pt-8 px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 pb-4 scrollbar-chat">
           <div
             v-for="(msg, index) in messages"
             :key="index"
-            :class="['flex', msg.role === 'user' ? 'justify-end' : 'justify-start']"
+            class="flex justify-center"
           >
-            <div
-              :class="[
-                'max-w-xs px-4 py-3 rounded-xl shadow-lg',
-                msg.role === 'user'
-                  ? 'bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-br-none'
-                  : 'bg-dark-800/80 backdrop-blur-xl border border-dark-700 text-dark-200 rounded-bl-none',
-              ]"
-            >
-              <p class="text-sm leading-relaxed">{{ msg.text }}</p>
+            <div class="max-w-full sm:max-w-4xl md:max-w-3xl lg:max-w-2xl w-full">
+              <!-- Сообщение пользователя - облачко справа от области агента -->
+              <div
+                v-if="msg.role === 'user'"
+                class="flex justify-end"
+              >
+                <div class="max-w-full sm:max-w-md px-4 py-3 rounded-xl shadow-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-br-none">
+                  <p class="text-sm leading-relaxed">{{ msg.text }}</p>
+                </div>
+              </div>
+              
+              <!-- Сообщение агента - сплошной текст с подписью -->
+              <div v-else>
+                <p class="text-base leading-relaxed text-dark-200 text-left">{{ msg.text }}</p>
+                <p class="text-xs text-dark-500 mt-2 text-left">AI Cyber Log</p>
+              </div>
             </div>
           </div>
-          <div v-if="isLoading" class="flex justify-start">
-            <div class="bg-dark-800/80 backdrop-blur-xl border border-dark-700 px-4 py-3 rounded-xl rounded-bl-none shadow-lg">
-              <div class="flex gap-1">
-                <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0ms"/>
-                <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 150ms"/>
-                <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 300ms"/>
-              </div>
+          <div v-if="isLoading" class="flex justify-center">
+            <div class="flex gap-1">
+              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0ms"/>
+              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 150ms"/>
+              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 300ms"/>
             </div>
           </div>
         </div>
 
         <!-- Быстрые вопросы (компактные плашки над полем ввода) -->
-        <div class="flex flex-wrap gap-2 px-4 py-2 mt-4">
+        <div class="flex flex-wrap gap-2 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-48 pt-2 pb-1 mt-4">
           <button
             @click="selectQuickQuestion('Сколько критичных инцидентов за последнее время?')"
             class="px-3 py-1.5 bg-dark-800/50 hover:bg-dark-800 border border-dark-700 hover:border-primary-500/50 rounded-lg text-xs text-dark-300 hover:text-primary-400 transition-all flex items-center gap-1.5"
@@ -65,7 +70,7 @@
         </div>
 
         <!-- Ввод сообщения -->
-        <div class="flex gap-3 p-4 items-start min-h-[116px]">
+        <div class="flex gap-3 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-48 py-4 items-start min-h-[116px]">
           <div class="flex-1 relative">
             <textarea
               v-model="inputMessage"
@@ -111,7 +116,7 @@
                 :title="getRateLimitMessage"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8m0 8l-6-4m6 4l6-4"/>
+                  <path d="M11.5003 12H5.41872M5.24634 12.7972L4.24158 15.7986C3.69128 17.4424 3.41613 18.2643 3.61359 18.7704C3.78506 19.21 4.15335 19.5432 4.6078 19.6701C5.13111 19.8161 5.92151 19.4604 7.50231 18.7491L17.6367 14.1886C19.1797 13.4942 19.9512 13.1471 20.1896 12.6648C20.3968 12.2458 20.3968 11.7541 20.1896 11.3351C19.9512 10.8529 19.1797 10.5057 17.6367 9.81135L7.48483 5.24303C5.90879 4.53382 5.12078 4.17921 4.59799 4.32468C4.14397 4.45101 3.77572 4.78336 3.60365 5.22209C3.40551 5.72728 3.67772 6.54741 4.22215 8.18767L5.24829 11.2793C5.34179 11.561 5.38855 11.7019 5.407 11.8459C5.42338 11.9738 5.42321 12.1032 5.40651 12.231C5.38768 12.375 5.34057 12.5157 5.24634 12.7972Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                 </svg>
               </button>
             </div>
