@@ -114,7 +114,7 @@ def process_user_input(user_id: int, user_input: str, rag_context: Dict) -> str:
             messages.append(Messages(role=MessagesRole.USER, content=user_input))
 
             # Create chat request
-            chat = Chat(messages=messages)
+            chat = Chat(messages=messages, max_tokens=50)
 
             # Get response from GigaChat
             response_model = giga.chat(chat)
