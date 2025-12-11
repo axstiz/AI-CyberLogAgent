@@ -2,9 +2,10 @@
 
 import json
 import os
-import psycopg2
 from datetime import datetime
 from typing import Dict, List
+
+import psycopg2
 
 # Импорт для работы с GigaChat
 from gigachat import GigaChat
@@ -19,7 +20,7 @@ DB_CONFIG = {
     "port": int(os.getenv("POSTGRES_PORT", 5433)),  # Match docker-compose port mapping
     "database": os.getenv("POSTGRES_DB", "cyberlog_db"),
     "user": os.getenv("POSTGRES_USER", "postgres"),
-    "password": os.getenv("POSTGRES_PASSWORD", "cyberlog_password")
+    "password": os.getenv("POSTGRES_PASSWORD", "cyberlog_password"),
 }
 
 # Path to RAG context files (JSON)
@@ -31,7 +32,7 @@ def get_db_connection():
     return psycopg2.connect(**DB_CONFIG)
 
 
-def load_rag_context() -> Dict:
+def load_rag_context() -> dict:
     """Load RAG context from JSON files."""
     context = {}
     if not os.path.exists(RAG_CONTEXT_DIR):
@@ -42,7 +43,7 @@ def load_rag_context() -> Dict:
         if filename.endswith(".json"):
             filepath = os.path.join(RAG_CONTEXT_DIR, filename)
             try:
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(filepath, encoding="utf-8") as f:
                     # Use filename without extension as key
                     context_key = filename[:-5]  # Remove .json extension
                     context[context_key] = json.load(f)
@@ -58,8 +59,8 @@ def save_message(user_id: int, role: str, content: str):
     cur = conn.cursor()
     try:
         cur.execute(
-            "INSERT INTO \"Messages\" (user_id, role, content, created_at) VALUES (%s, %s, %s, %s)",
-            (user_id, role, content, datetime.now())
+            'INSERT INTO "Messages" (user_id, role, content, created_at) VALUES (%s, %s, %s, %s)',
+            (user_id, role, content, datetime.now()),
         )
         conn.commit()
     finally:
@@ -67,26 +68,25 @@ def save_message(user_id: int, role: str, content: str):
         conn.close()
 
 
-def get_chat_history(user_id: int) -> List[Dict]:
+def get_chat_history(user_id: int) -> list[dict]:
     """Retrieve chat history for a user from the database."""
     conn = get_db_connection()
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT role, content, created_at FROM \"Messages\" WHERE user_id = %s ORDER BY created_at ASC",
-            (user_id,)
+            'SELECT role, content, created_at FROM "Messages" WHERE user_id = %s ORDER BY created_at ASC',
+            (user_id,),
         )
         rows = cur.fetchall()
         return [
-            {"role": row[0], "content": row[1], "created_at": row[2]}
-            for row in rows
+            {"role": row[0], "content": row[1], "created_at": row[2]} for row in rows
         ]
     finally:
         cur.close()
         conn.close()
 
 
-def process_user_input(user_id: int, user_input: str, rag_context: Dict) -> str:
+def process_user_input(user_id: int, user_input: str, rag_context: dict) -> str:
     """Process user input and return appropriate response using GigaChat."""
     # Save user message
     save_message(user_id, "user", user_input)
@@ -94,7 +94,11 @@ def process_user_input(user_id: int, user_input: str, rag_context: Dict) -> str:
     # Use GigaChat for general conversation
     try:
         # Initialize GigaChat client with scope
-        with GigaChat(credentials=GIGACHAT_API_KEY, scope="GIGACHAT_API_PERS", verify_ssl_certs=False) as giga:
+        with GigaChat(
+            credentials=GIGACHAT_API_KEY,
+            scope="GIGACHAT_API_PERS",
+            verify_ssl_certs=False,
+        ) as giga:
             # Get chat history for context
             history = get_chat_history(user_id)
             messages = []
@@ -103,9 +107,13 @@ def process_user_input(user_id: int, user_input: str, rag_context: Dict) -> str:
             for msg in history:
                 role = msg["role"]
                 if role == "user":
-                    messages.append(Messages(role=MessagesRole.USER, content=msg["content"]))
+                    messages.append(
+                        Messages(role=MessagesRole.USER, content=msg["content"])
+                    )
                 elif role == "assistant":
-                    messages.append(Messages(role=MessagesRole.ASSISTANT, content=msg["content"]))
+                    messages.append(
+                        Messages(role=MessagesRole.ASSISTANT, content=msg["content"])
+                    )
 
             # Add current user message
             messages.append(Messages(role=MessagesRole.USER, content=user_input))
@@ -119,7 +127,9 @@ def process_user_input(user_id: int, user_input: str, rag_context: Dict) -> str:
 
     except Exception as e:
         print(f"Error communicating with GigaChat: {e}")
-        response = "Извините, произошла ошибка при подключении к нейросети. Попробуйте позже."
+        response = (
+            "Извините, произошла ошибка при подключении к нейросети. Попробуйте позже."
+        )
 
     # Save response
     save_message(user_id, "assistant", response)
@@ -145,8 +155,6 @@ def main():
     user_input = input("\nВы: ")
     response = process_user_input(user_id, user_input, rag_context)
     print(f"Ассистент: {response}")
-
-
 
 
 if __name__ == "__main__":
