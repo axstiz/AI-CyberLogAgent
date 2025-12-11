@@ -1,9 +1,57 @@
 <template>
   <div class="pt-4 sm:pt-6 md:pt-8 pb-4 sm:pb-6 md:pb-8">
     <div class="px-4 sm:px-6 md:px-8">
-      <div class="mb-6 md:mb-8">
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Статистика</h1>
-        <p class="text-sm sm:text-base text-dark-400">Аналитика и тренды инцидентов</p>
+      <div class="mb-6 md:mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Статистика</h1>
+          <p class="text-sm sm:text-base text-dark-400">Аналитика и тренды инцидентов</p>
+        </div>
+        
+        <DatePeriodPicker 
+          v-model="selectedPeriod"
+          :period-type="periodType"
+          @update:period-type="periodType = $event"
+          @change="onPeriodChange"
+        />
+      </div>
+
+      <!-- Временная шкала с выбором периода -->
+      <div class="card mb-6 md:mb-8">
+        <h2 class="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+          <svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+          </svg>
+          Активность по {{ periodType === 'week' ? 'дням' : 'дням месяца' }}
+        </h2>
+
+        <div v-if="loadingActivity" class="text-center py-8 text-dark-400 text-sm sm:text-base">
+          Загрузка данных активности...
+        </div>
+        <div v-else class="h-48 sm:h-56 md:h-64 flex items-end justify-center gap-1 sm:gap-2 overflow-x-auto pt-2">
+          <div v-for="(item, index) in activityData" :key="index" class="flex flex-col items-center gap-1 sm:gap-2 group flex-shrink-0 relative">
+            <div
+              class="bg-gradient-to-t from-primary-600 to-primary-500 rounded-t-lg hover:from-primary-500 hover:to-primary-400 transition-all duration-300 shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 cursor-pointer relative overflow-visible"
+              :class="periodType === 'week' ? 'w-8 sm:w-10' : 'w-4 sm:w-6'"
+              :style="{ height: Math.max(item.count * 20, 4) + 'px' }"
+            >
+              <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+            <!-- Подсказка справа для высоких столбиков, сверху для низких -->
+            <div 
+              v-if="item.count * 20 > 150"
+              class="absolute left-full ml-2 top-0 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-dark-700"
+            >
+              {{ item.count }} {{ pluralize(item.count, 'инцидент', 'инцидента', 'инцидентов') }}
+            </div>
+            <div 
+              v-else
+              class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-dark-700"
+            >
+              {{ item.count }} {{ pluralize(item.count, 'инцидент', 'инцидента', 'инцидентов') }}
+            </div>
+            <span class="text-xs text-dark-500 group-hover:text-dark-400 transition-colors">{{ getLabel(index, item.date) }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Блок статистики по уровням серьезности (из БД) -->
@@ -74,54 +122,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Временная шкала с выбором периода -->
-      <div class="card">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
-          <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-            <svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-            </svg>
-            Активность по {{ periodType === 'week' ? 'дням' : 'дням месяца' }}
-          </h2>
-          
-          <DatePeriodPicker 
-            v-model="selectedPeriod"
-            :period-type="periodType"
-            @update:period-type="periodType = $event"
-            @change="onPeriodChange"
-          />
-        </div>
-
-        <div v-if="loadingActivity" class="text-center py-8 text-dark-400 text-sm sm:text-base">
-          Загрузка данных активности...
-        </div>
-        <div v-else class="h-48 sm:h-56 md:h-64 flex items-end justify-center gap-1 sm:gap-2 overflow-x-auto pt-2">
-          <div v-for="(item, index) in activityData" :key="index" class="flex flex-col items-center gap-1 sm:gap-2 group flex-shrink-0 relative">
-            <div
-              class="bg-gradient-to-t from-primary-600 to-primary-500 rounded-t-lg hover:from-primary-500 hover:to-primary-400 transition-all duration-300 shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 cursor-pointer relative overflow-visible"
-              :class="periodType === 'week' ? 'w-8 sm:w-10' : 'w-4 sm:w-6'"
-              :style="{ height: Math.max(item.count * 20, 4) + 'px' }"
-            >
-              <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-            <!-- Подсказка справа для высоких столбиков, сверху для низких -->
-            <div 
-              v-if="item.count * 20 > 150"
-              class="absolute left-full ml-2 top-0 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-dark-700"
-            >
-              {{ item.count }} {{ pluralize(item.count, 'инцидент', 'инцидента', 'инцидентов') }}
-            </div>
-            <div 
-              v-else
-              class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-dark-700"
-            >
-              {{ item.count }} {{ pluralize(item.count, 'инцидент', 'инцидента', 'инцидентов') }}
-            </div>
-            <span class="text-xs text-dark-500 group-hover:text-dark-400 transition-colors">{{ getLabel(index, item.date) }}</span>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -170,7 +170,10 @@ function getWeekRange(date) {
 // Загрузка данных по уровням серьезности
 async function loadSeverityStats() {
   try {
-    const response = await statistics.severity()
+    const response = await statistics.severity(
+      formatDateTime(selectedPeriod.value.start),
+      formatDateTime(selectedPeriod.value.end)
+    )
     severityStats.value = response.data.data
     totalSeverityCount.value = severityStats.value.reduce((sum, item) => sum + item.count, 0)
   } catch (error) {
@@ -181,7 +184,10 @@ async function loadSeverityStats() {
 // Загрузка данных по типам угроз
 async function loadThreatStats() {
   try {
-    const response = await statistics.threats()
+    const response = await statistics.threats(
+      formatDateTime(selectedPeriod.value.start),
+      formatDateTime(selectedPeriod.value.end)
+    )
     // Сортируем так, чтобы "Другое" было в конце
     threatStats.value = response.data.data.sort((a, b) => {
       if (a.name === 'Другое') return 1
@@ -225,7 +231,10 @@ async function loadActivityStats() {
 function onPeriodChange(event) {
   selectedPeriod.value = { start: event.start, end: event.end }
   periodType.value = event.periodType
+  // Обновляем все данные при изменении периода
   loadActivityStats()
+  loadSeverityStats()
+  loadThreatStats()
 }
 
 // Вычисление процента для прогресс-бара
