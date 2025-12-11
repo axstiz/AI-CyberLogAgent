@@ -64,6 +64,16 @@ export const incidents = {
 export const statistics = {
   overview: () => apiClient.get('/statistics/overview'),
   timeline: (days = 30) => apiClient.get('/statistics/timeline', { params: { days } }),
+  severity: () => apiClient.get('/statistics/severity'),
+  threats: () => apiClient.get('/statistics/threats'),
+  activity: (periodType, startDate, endDate) => 
+    apiClient.get('/statistics/activity', { 
+      params: { 
+        period_type: periodType, 
+        start_date: startDate, 
+        end_date: endDate 
+      } 
+    }),
 }
 
 /**

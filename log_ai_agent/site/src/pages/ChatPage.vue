@@ -99,6 +99,11 @@
               style="min-height: 84px; max-height: 400px; height: auto;"
             ></textarea>
             
+            <!-- Сообщение об ошибке пустого файла -->
+            <div v-if="isEmptyFile" class="absolute bottom-16 right-3 text-xs text-red-500">
+              Файл пустой
+            </div>
+            
             <!-- Счетчик и кнопки внизу справа -->
             <div class="absolute bottom-2 right-3 flex items-center gap-2">
               <div class="text-xs px-2 py-1 rounded bg-dark-800/80 text-dark-400">
@@ -115,7 +120,12 @@
               />
               <button
                 @click="$refs.fileInput.click()"
-                class="btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-primary-500/50 text-dark-300 hover:text-primary-400 transition-all p-2"
+                :class="[
+                  'btn bg-dark-800 hover:bg-dark-700 border transition-all p-2',
+                  isEmptyFile 
+                    ? 'border-red-500 text-red-400 hover:border-red-400' 
+                    : 'border-dark-700 hover:border-primary-500/50 text-dark-300 hover:text-primary-400'
+                ]"
                 title="Загрузить .log файл"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,6 +166,7 @@ const isLoading = ref(false)
 const uploadedLogFile = ref(null)
 const lastMessageTime = ref(0)
 const isRateLimited = ref(false)
+const isEmptyFile = ref(false)
 
 // Константы ограничений
 const MAX_MESSAGE_LENGTH = 500
@@ -323,6 +334,9 @@ const handleFileUpload = async (event) => {
   
   if (!file) return
   
+  // Сбрасываем состояние ошибки пустого файла
+  isEmptyFile.value = false
+  
   // Проверяем расширение файла
   if (!file.name.endsWith('.log')) {
     messages.value.push({
@@ -339,6 +353,20 @@ const handleFileUpload = async (event) => {
   
   reader.onload = (e) => {
     const fileContent = e.target.result
+    
+    // Проверяем, что файл не пустой
+    if (!fileContent || fileContent.trim().length === 0) {
+      isEmptyFile.value = true
+      messages.value.push({
+        role: 'ai',
+        text: '❌ Ошибка: Файл пустой. Загрузите файл с содержимым.',
+      })
+      scrollToBottom()
+      return
+    }
+    
+    // Сбрасываем ошибку, если файл не пустой
+    isEmptyFile.value = false
     
     // Сохраняем файл в переменную
     uploadedLogFile.value = {
