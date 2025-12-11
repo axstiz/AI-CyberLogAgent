@@ -151,22 +151,41 @@ async def health_check():
 
 
 @app.get("/api/statistics/severity")
-async def get_severity_statistics():
+async def get_severity_statistics(
+    start_date: str = None,
+    end_date: str = None
+):
     """Получить статистику по уровням серьезности"""
     try:
         conn = await asyncpg.connect(DATABASE_URL, timeout=5)
 
-        # Получаем все уровни серьезности и количество отчетов для каждого
-        rows = await conn.fetch("""
-            SELECT 
-                sl.severity_level_id,
-                sl.name,
-                COUNT(r.report_id) as count
-            FROM public."SeverityLevels" sl
-            LEFT JOIN public."Reports" r ON sl.severity_level_id = r.severity_level_id
-            GROUP BY sl.severity_level_id, sl.name
-            ORDER BY sl.severity_level_id
-        """)
+        # Формируем запрос с учетом фильтров по датам
+        if start_date and end_date:
+            # Преобразуем строки в datetime
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            
+            rows = await conn.fetch("""
+                SELECT 
+                    sl.severity_level_id,
+                    sl.name,
+                    COUNT(CASE WHEN r.created_at BETWEEN $1 AND $2 THEN r.report_id END) as count
+                FROM public."SeverityLevels" sl
+                LEFT JOIN public."Reports" r ON sl.severity_level_id = r.severity_level_id
+                GROUP BY sl.severity_level_id, sl.name
+                ORDER BY sl.severity_level_id
+            """, start_dt, end_dt)
+        else:
+            rows = await conn.fetch("""
+                SELECT 
+                    sl.severity_level_id,
+                    sl.name,
+                    COUNT(r.report_id) as count
+                FROM public."SeverityLevels" sl
+                LEFT JOIN public."Reports" r ON sl.severity_level_id = r.severity_level_id
+                GROUP BY sl.severity_level_id, sl.name
+                ORDER BY sl.severity_level_id
+            """)
 
         await conn.close()
 
@@ -182,22 +201,41 @@ async def get_severity_statistics():
 
 
 @app.get("/api/statistics/threats")
-async def get_threat_statistics():
+async def get_threat_statistics(
+    start_date: str = None,
+    end_date: str = None
+):
     """Получить статистику по типам угроз"""
     try:
         conn = await asyncpg.connect(DATABASE_URL, timeout=5)
 
-        # Получаем все типы угроз и количество отчетов для каждого
-        rows = await conn.fetch("""
-            SELECT 
-                tt.threat_type_id,
-                tt.name,
-                COUNT(r.report_id) as count
-            FROM public."ThreatTypes" tt
-            LEFT JOIN public."Reports" r ON tt.threat_type_id = r.threat_type_id
-            GROUP BY tt.threat_type_id, tt.name
-            ORDER BY COUNT(r.report_id) DESC, tt.name
-        """)
+        # Формируем запрос с учетом фильтров по датам
+        if start_date and end_date:
+            # Преобразуем строки в datetime
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            
+            rows = await conn.fetch("""
+                SELECT 
+                    tt.threat_type_id,
+                    tt.name,
+                    COUNT(CASE WHEN r.created_at BETWEEN $1 AND $2 THEN r.report_id END) as count
+                FROM public."ThreatTypes" tt
+                LEFT JOIN public."Reports" r ON tt.threat_type_id = r.threat_type_id
+                GROUP BY tt.threat_type_id, tt.name
+                ORDER BY COUNT(CASE WHEN r.created_at BETWEEN $1 AND $2 THEN r.report_id END) DESC, tt.name
+            """, start_dt, end_dt)
+        else:
+            rows = await conn.fetch("""
+                SELECT 
+                    tt.threat_type_id,
+                    tt.name,
+                    COUNT(r.report_id) as count
+                FROM public."ThreatTypes" tt
+                LEFT JOIN public."Reports" r ON tt.threat_type_id = r.threat_type_id
+                GROUP BY tt.threat_type_id, tt.name
+                ORDER BY COUNT(r.report_id) DESC, tt.name
+            """)
 
         await conn.close()
 
