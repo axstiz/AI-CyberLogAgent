@@ -1,8 +1,8 @@
-from langchain_gigachat.chat_models import GigaChat
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
+from langchain_chroma import Chroma
+from langchain_gigachat.chat_models import GigaChat
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from log_ai_agent.config.cfg import GIGACHAT_API_KEY
 
@@ -14,7 +14,7 @@ embeddings = HuggingFaceEmbeddings(model_name="./model")
 vectorstore = Chroma(
     persist_directory="./chroma_db",
     embedding_function=embeddings,
-    collection_name="mitre_collection"
+    collection_name="mitre_collection",
 )
 
 # 3. Инициализируем GigaChat
@@ -22,8 +22,8 @@ vectorstore = Chroma(
 llm = GigaChat(
     credentials=GIGACHAT_API_KEY,
     verify_ssl_certs=False,
-    model="GigaChat", # или GigaChat-Pro / GigaChat-Max
-    temperature=0.1   # Ставим низкую температуру для точности
+    model="GigaChat",  # или GigaChat-Pro / GigaChat-Max
+    temperature=0.1,  # Ставим низкую температуру для точности
 )
 
 # 4. Настраиваем Промпт (чтобы GigaChat отвечал строго по базе MITRE)
@@ -44,24 +44,26 @@ qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     chain_type="stuff",
     retriever=vectorstore.as_retriever(search_kwargs={"k": 13}),
-    chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
 )
 
+
 def ask_gigachat(question: str) -> str:
-    """
-    Функция для отправки вопроса в GigaChat с добавлением префикса "query:"
+    """Функция для отправки вопроса в GigaChat с добавлением префикса "query:"
     и получения ответа.
-    
+
     Args:
         question (str): Вопрос от пользователя.
-    
+
     Returns:
         str: Ответ от GigaChat.
+
     """
     # Добавляем префикс "query: " к вопросу
     formatted_question = f"query: {question}"
     response = qa_chain.invoke(formatted_question)
     return response["result"]
+
 
 # Пример использования функции
 if __name__ == "__main__":
