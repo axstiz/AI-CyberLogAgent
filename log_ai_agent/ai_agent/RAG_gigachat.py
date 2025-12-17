@@ -1,11 +1,9 @@
-from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_chroma import Chroma
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 from langchain_gigachat.chat_models import GigaChat
 from langchain_huggingface import HuggingFaceEmbeddings
-
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
 
 from log_ai_agent.config.cfg import GIGACHAT_API_KEY
 
@@ -44,7 +42,10 @@ QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
 
 # 5. Создаем цепочку RAG
 rag_chain = (
-    {"context": vectorstore.as_retriever(search_kwargs={"k": 5}), "question": RunnablePassthrough()}
+    {
+        "context": vectorstore.as_retriever(search_kwargs={"k": 5}),
+        "question": RunnablePassthrough(),
+    }
     | QA_CHAIN_PROMPT
     | llm
     | StrOutputParser()
@@ -70,7 +71,7 @@ def ask_gigachat(question: str) -> str:
 
 # Пример использования функции
 if __name__ == "__main__":
-    question = ("Как injection?")
+    question = "Как injection?"
     answer = ask_gigachat(question)
     print("--- ОТВЕТ GIGACHAT ---")
     print(answer)
