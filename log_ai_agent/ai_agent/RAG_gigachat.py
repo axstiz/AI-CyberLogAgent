@@ -1,6 +1,7 @@
-from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_chroma import Chroma
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 from langchain_gigachat.chat_models import GigaChat
 from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -27,7 +28,7 @@ llm = GigaChat(
 )
 
 # 4. Настраиваем Промпт (чтобы GigaChat отвечал строго по базе MITRE)
-template = """Используй предоставленные фрагменты базы знаний MITRE ATT&CK для ответа на вопрос. 
+template = """Используй предоставленные фрагменты базы знаний MITRE ATT&CK для ответа на вопрос. Также в дополнение скажи какая линия (1, 2, 3) занимается такими угрозами. 
 Если ты не знаешь ответа, просто скажи, что не знаешь, не пытайся выдумывать.
 Используй максимум три предложения и старайся отвечать кратко.
 
@@ -40,11 +41,14 @@ template = """Используй предоставленные фрагмент
 QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
 
 # 5. Создаем цепочку RAG
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 13}),
-    chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+rag_chain = (
+    {
+        "context": vectorstore.as_retriever(search_kwargs={"k": 5}),
+        "question": RunnablePassthrough(),
+    }
+    | QA_CHAIN_PROMPT
+    | llm
+    | StrOutputParser()
 )
 
 
@@ -61,13 +65,13 @@ def ask_gigachat(question: str) -> str:
     """
     # Добавляем префикс "query: " к вопросу
     formatted_question = f"query: {question}"
-    response = qa_chain.invoke(formatted_question)
-    return response["result"]
+    response = rag_chain.invoke(formatted_question)
+    return response
 
 
 # Пример использования функции
 if __name__ == "__main__":
-    question = "Как дела?"
+    question = "Как injection?"
     answer = ask_gigachat(question)
     print("--- ОТВЕТ GIGACHAT ---")
     print(answer)
