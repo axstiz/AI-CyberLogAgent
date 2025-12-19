@@ -42,3 +42,5 @@ secrets.py
 .idea/
 /log_ai_agent/ai_agent/chroma_db/
 /log_ai_agent/ai_agent/model/
+
+data/
