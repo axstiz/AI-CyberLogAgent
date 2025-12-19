@@ -11,11 +11,11 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from log_ai_agent.ai_agent.gigachat_async import (
+from log_ai_agent.ai_agent.gigachat import (
+    analyze_log_with_gigachat,
     clear_user_context,
     process_chat_message,
 )
-from log_ai_agent.ai_agent.log_analysis_service import process_log_file
 from log_ai_agent.config import commands
 
 # Загрузка переменных окружения из .env файла
@@ -658,6 +658,7 @@ class ChatSendResponse(BaseModel):
     success: bool
     user_message: str
     agent_response: str
+    mode: str | None = None
     message: str | None = None
 
 
@@ -680,18 +681,21 @@ async def send_chat_message(request: ChatSendRequest):
             )
 
         # Обрабатываем сообщение через GigaChat
-        agent_response = await process_chat_message(
+        result = await process_chat_message(
             user_id=request.user_id,
             user_message=request.message,
             database_url=DATABASE_URL,
         )
 
-        logger.info(f"Chat message processed for user {request.user_id}")
+        logger.info(
+            f"Chat message processed for user {request.user_id}, mode: {result['mode']}"
+        )
 
         return ChatSendResponse(
             success=True,
             user_message=request.message,
-            agent_response=agent_response,
+            agent_response=result["response"],
+            mode=result["mode"],
             message="Сообщение успешно обработано",
         )
 
@@ -750,26 +754,57 @@ async def upload_log_file(user_id: int, file: UploadFile = File(...)):
             f"размер: {len(content_str)} байт"
         )
 
-        # Обрабатываем файл через полный цикл анализа
-        result = await process_log_file(
-            user_id=user_id,
-            filename=file.filename,
-            file_content=content_str,
-            database_url=DATABASE_URL,
-        )
+        # Анализируем лог через GigaChat
+        analysis_result = await analyze_log_with_gigachat(content_str)
 
-        if result["success"]:
+        # Сохраняем лог в БД
+        conn = await asyncpg.connect(DATABASE_URL, timeout=10)
+        try:
+            # Сохраняем содержимое лога
+            log_row = await conn.fetchrow(
+                """
+                INSERT INTO public."Logs" (file_content, date)
+                VALUES ($1, NOW())
+                RETURNING log_id
+                """,
+                content_str,
+            )
+            log_id = log_row["log_id"]
+
+            # Создаем отчет на основе анализа GigaChat
+            report_row = await conn.fetchrow(
+                """
+                INSERT INTO public."Reports" (
+                    log_id, 
+                    severity_level_id, 
+                    threat_type_id, 
+                    description, 
+                    created_at
+                )
+                VALUES ($1, $2, $3, $4, NOW())
+                RETURNING report_id
+                """,
+                log_id,
+                analysis_result["severity_level_id"],
+                analysis_result["threat_type_id"],
+                analysis_result["description"],
+            )
+            report_id = report_row["report_id"]
+
             logger.info(
                 f"Файл {file.filename} успешно обработан. "
-                f"Log ID: {result['log_id']}, Report ID: {result['report_id']}"
+                f"Log ID: {log_id}, Report ID: {report_id}"
             )
 
-            return {"success": True, "gigachat_analysis": result["gigachat_analysis"]}
-        else:
-            raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Ошибка при обработке файла"),
-            )
+            return {
+                "success": True,
+                "log_id": log_id,
+                "report_id": report_id,
+                "gigachat_analysis": analysis_result["description"],
+            }
+
+        finally:
+            await conn.close()
 
     except HTTPException:
         raise
