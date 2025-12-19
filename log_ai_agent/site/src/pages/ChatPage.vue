@@ -465,11 +465,20 @@ const sendMessage = async () => {
     // Вызываем новый endpoint для обработки сообщения с AI
     const response = await chat.sendToAI(userId, userMessage)
     
+    console.log('📦 Full API Response:', response.data)
+    
     const isOnChatPage = route.path === '/chat'
     const isTabVisible = document.visibilityState === 'visible'
     const shouldNotify = !isOnChatPage || !isTabVisible
     
     const aiResponse = response.data.agent_response
+    const responseMode = response.data.mode || 'UNKNOWN'
+    
+    // Выводим режим работы в консоль браузера
+    console.log(`🤖 GigaChat Mode: ${responseMode}`)
+    console.log(`📝 Response length: ${aiResponse.length} characters`)
+    console.log(`💬 Message: "${userMessage}"`)
+    console.log('---')
     
     messages.value.push({
       role: 'ai',
