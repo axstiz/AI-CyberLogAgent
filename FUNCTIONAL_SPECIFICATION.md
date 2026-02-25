@@ -5,7 +5,7 @@
 
 **Результат:** готовый продукт для production.
 
-![Схема](https://ibb.co/zH6JQzyK)
+[Схема системы](https://ibb.co/zH6JQzyK)
 
 ## Задачи
 
