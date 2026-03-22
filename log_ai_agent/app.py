@@ -16,7 +16,7 @@ from log_ai_agent.ai_agent.gigachat import (
     clear_user_context,
     process_chat_message,
 )
-from log_ai_agent.ai_agent_v2.integration import analyze_log_v2, close_pipeline
+from log_ai_agent.ai_agent_v2.app_integration import analyze_log_v2, close_pipeline
 from log_ai_agent.config import commands
 
 # Загрузка переменных окружения из .env файла

@@ -1,5 +1,5 @@
-"""Analysis pipeline modules."""
+"""Pipeline module."""
 
-from .analyzer import LogAnalysisPipeline
+from .full_pipeline import LogAnalysisPipeline, create_pipeline
 
-__all__ = ["LogAnalysisPipeline"]
+__all__ = ["LogAnalysisPipeline", "create_pipeline"]

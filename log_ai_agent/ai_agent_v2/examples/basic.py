@@ -1,25 +1,36 @@
 #!/usr/bin/env python3
-"""Quick test script for AI Agent v2."""
+r"""
+Basic example of AI Agent v2 usage.
+
+This example shows how to:
+1. Create a pipeline
+2. Analyze log content
+3. Get results
+
+Usage:
+    cd C:\Users\litsu\PycharmProjects\AI-CyberLogAgent
+    uv run -m log_ai_agent.ai_agent_v2.examples.basic
+"""
 
 import asyncio
 import sys
 from pathlib import Path
 
 # Add project root
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from log_ai_agent.ai_agent_v2 import create_pipeline
+from log_ai_agent.ai_agent_v2.pipeline.full_pipeline import create_pipeline
 from log_ai_agent.ai_agent_v2.callbacks import get_callback_config
 
 
 async def main():
-    """Run quick test."""
+    """Run basic analysis example."""
     print("=" * 60)
-    print("  AI Agent v2 - Quick Test")
+    print("  AI Agent v2 - Basic Example")
     print("=" * 60)
 
-    # Sample logs
+    # Sample log content
     log_content = """
 2026-03-21 10:15:45 WARNING Failed login attempt for user admin from 192.168.1.100
 2026-03-21 10:15:46 WARNING Failed login attempt for user admin from 192.168.1.100
@@ -30,7 +41,7 @@ async def main():
 
     print("\n1. Creating pipeline...")
     pipeline = await create_pipeline(
-        use_rag=False,  # Disable RAG for quick test
+        use_rag=True,  # Set to False to disable RAG
     )
     print("✓ Pipeline created")
 
@@ -46,23 +57,37 @@ async def main():
     if results.get("success"):
         stages = results.get("stages", {})
 
+        # Agent 1
         if "agent1" in stages:
-            print(f"\n✓ Agent 1: Found {stages['agent1'].get('events_found', 0)} events")
+            print(f"\nAgent 1: Found {stages['agent1'].get('events_found', 0)} events")
 
+        # RAG
+        if "rag" in stages:
+            rag = stages["rag"]
+            if rag.get("success"):
+                print(f"RAG: Found {rag.get('techniques_count', 0)} MITRE techniques")
+            else:
+                print("RAG: Disabled or unavailable")
+
+        # Agent 2
         if "agent2" in stages:
             agent2 = stages["agent2"]
-            print(f"✓ Agent 2: severity={agent2.get('severity_level_id')}, threat={agent2.get('threat_type_id')}")
-            print(f"\nReport preview:")
-            print(agent2.get('final_report', '')[:300])
+            print(f"\nAgent 2:")
+            print(f"  Severity: {agent2.get('severity_level_id')}/4")
+            print(f"  Threat: {agent2.get('threat_type_id')}/11")
+            print(f"  MITRE: {agent2.get('mitre_techniques', [])}")
 
-        print(f"\n✓ Total time: {results.get('total_time_sec', 0):.1f}s")
+            print("\n" + "-" * 60)
+            print("Final Report:")
+            print("-" * 60)
+            print(agent2.get('final_report', '')[:500])  # First 500 chars
+
         print("\n" + "=" * 60)
-        print("  TEST PASSED")
+        print(f"Total time: {results.get('total_time_sec', 0):.1f}s")
         print("=" * 60)
 
     else:
         print(f"✗ Analysis failed: {results.get('error', 'Unknown error')}")
-        sys.exit(1)
 
 
 if __name__ == "__main__":
