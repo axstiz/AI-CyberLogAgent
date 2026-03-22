@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 # Enable debug logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(levelname)s - %(message)s',
+    format="%(levelname)s - %(message)s",
 )
 
 from log_ai_agent.ai_agent_v2 import create_pipeline
@@ -43,7 +43,7 @@ async def main():
 
     print("2. Analyzing logs...\n")
     print("-" * 60)
-    
+
     results = await pipeline.analyze(
         log_content=log_content,
         config=get_callback_config(show_output=False),
@@ -51,29 +51,29 @@ async def main():
 
     print("-" * 60)
     print("\n3. Results:")
-    
+
     if results.get("success"):
         stages = results.get("stages", {})
-        
+
         # Agent 1
         if "agent1" in stages:
             agent1 = stages["agent1"]
             print(f"\n✓ Agent 1 Output ({agent1.get('events_found', 0)} events):")
             print(f"  {agent1.get('primary_analysis', '')[:200]}...")
-        
+
         # RAG
         if "rag" in stages:
             rag = stages["rag"]
-            print(f"\n✓ RAG Search:")
+            print("\n✓ RAG Search:")
             print(f"  Techniques found: {rag.get('techniques_count', 0)}")
             print(f"  Technique IDs: {rag.get('technique_ids', [])}")
-            print(f"\n  MITRE Context:")
+            print("\n  MITRE Context:")
             print(f"  {rag.get('mitre_context', '')[:300]}...")
-        
+
         # Agent 2
         if "agent2" in stages:
             agent2 = stages["agent2"]
-            print(f"\n✓ Agent 2 Output:")
+            print("\n✓ Agent 2 Output:")
             print(f"  Severity: {agent2.get('severity_level_id')}/4")
             print(f"  Threat: {agent2.get('threat_type_id')}/11")
             print(f"  MITRE Techniques: {agent2.get('mitre_techniques', [])}")
@@ -94,5 +94,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

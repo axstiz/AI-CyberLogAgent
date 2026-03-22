@@ -47,13 +47,17 @@ async def main():
         stages = results.get("stages", {})
 
         if "agent1" in stages:
-            print(f"\n✓ Agent 1: Found {stages['agent1'].get('events_found', 0)} events")
+            print(
+                f"\n✓ Agent 1: Found {stages['agent1'].get('events_found', 0)} events"
+            )
 
         if "agent2" in stages:
             agent2 = stages["agent2"]
-            print(f"✓ Agent 2: severity={agent2.get('severity_level_id')}, threat={agent2.get('threat_type_id')}")
-            print(f"\nReport preview:")
-            print(agent2.get('final_report', '')[:300])
+            print(
+                f"✓ Agent 2: severity={agent2.get('severity_level_id')}, threat={agent2.get('threat_type_id')}"
+            )
+            print("\nReport preview:")
+            print(agent2.get("final_report", "")[:300])
 
         print(f"\n✓ Total time: {results.get('total_time_sec', 0):.1f}s")
         print("\n" + "=" * 60)
@@ -71,5 +75,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

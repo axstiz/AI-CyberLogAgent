@@ -2,7 +2,8 @@
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional
+from collections.abc import Sequence
 from uuid import UUID
 
 from langchain_core.callbacks import BaseCallbackHandler
@@ -12,30 +13,29 @@ logger = logging.getLogger(__name__)
 
 
 class ConsoleCallbackHandler(BaseCallbackHandler):
-    """
-    Callback handler for console output.
+    """Callback handler for console output.
 
     Prints chain execution steps to console with timing.
     """
 
     def __init__(self, show_output: bool = False):
-        """
-        Initialize callback handler.
+        """Initialize callback handler.
 
         Args:
             show_output: Whether to show full output (default: False)
+
         """
         super().__init__()
         self.show_output = show_output
-        self._chain_start_times: Dict[UUID, float] = {}
+        self._chain_start_times: dict[UUID, float] = {}
 
     def on_chain_start(
         self,
-        serialized: Optional[Dict[str, Any]],
-        inputs: Dict[str, Any],
+        serialized: dict[str, Any] | None,
+        inputs: dict[str, Any],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when chain starts."""
@@ -47,10 +47,10 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
 
     def on_chain_end(
         self,
-        outputs: Dict[str, Any],
+        outputs: dict[str, Any],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when chain ends."""
@@ -72,7 +72,7 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
         error: BaseException,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when chain errors."""
@@ -81,11 +81,11 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
 
     def on_llm_start(
         self,
-        serialized: Optional[Dict[str, Any]],
-        prompts: List[str],
+        serialized: dict[str, Any] | None,
+        prompts: list[str],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when LLM starts."""
@@ -97,7 +97,7 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
         response: LLMResult,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when LLM ends."""
@@ -106,11 +106,11 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
 
     def on_retriever_start(
         self,
-        serialized: Optional[Dict[str, Any]],
+        serialized: dict[str, Any] | None,
         query: str,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when retriever starts."""
@@ -122,7 +122,7 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
         documents: Sequence[Any],
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
+        parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
         """Run when retriever ends."""
@@ -131,14 +131,14 @@ class ConsoleCallbackHandler(BaseCallbackHandler):
 
 
 def get_callback_config(show_output: bool = False) -> dict:
-    """
-    Get callback configuration for LangChain.
+    """Get callback configuration for LangChain.
 
     Args:
         show_output: Whether to show full output
 
     Returns:
         Config dict with callbacks
+
     """
     return {
         "callbacks": [ConsoleCallbackHandler(show_output=show_output)],

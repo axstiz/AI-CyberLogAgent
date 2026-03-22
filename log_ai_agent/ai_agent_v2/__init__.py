@@ -1,5 +1,4 @@
-"""
-AI Agent v2 - Log analysis pipeline with LangChain and RAG.
+"""AI Agent v2 - Log analysis pipeline with LangChain and RAG.
 
 Usage:
     # Quick start
@@ -12,11 +11,11 @@ Usage:
     uv run -m log_ai_agent.ai_agent_v2.run
 """
 
-from .config import AgentConfig
-from .pipeline.full_pipeline import LogAnalysisPipeline, create_pipeline
-from .knowledge_base.mitre_loader import initialize_mitre_knowledge_base
 from .chains.llm import create_gigachat_llm
+from .config import AgentConfig
+from .knowledge_base.mitre_loader import initialize_mitre_knowledge_base
 from .models_types import AnalysisState, PipelineResult
+from .pipeline.full_pipeline import LogAnalysisPipeline, create_pipeline
 
 __all__ = [
     # Pipeline

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-r"""
-CLI for AI Agent v2 log analysis.
+r"""CLI for AI Agent v2 log analysis.
 
 Usage:
     cd C:\Users\litsu\PycharmProjects\AI-CyberLogAgent
@@ -12,33 +11,32 @@ Or with options:
 
 import asyncio
 import sys
-import time
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from log_ai_agent.ai_agent_v2.callbacks import get_callback_config
 from log_ai_agent.ai_agent_v2.config import AgentConfig
 from log_ai_agent.ai_agent_v2.pipeline.full_pipeline import create_pipeline
-from log_ai_agent.ai_agent_v2.callbacks import get_callback_config
-
 
 # =============================================================================
 # Colors for terminal output
 # =============================================================================
 
+
 class Colors:
     """ANSI color codes."""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BOLD = '\033[1m'
-    RESET = '\033[0m'
+
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
 
 
 def print_header(text: str):
@@ -77,6 +75,7 @@ def print_error(text: str):
 # Log input
 # =============================================================================
 
+
 def get_log_input() -> str:
     """Get log content from user."""
     print_header("Ввод логов")
@@ -92,7 +91,7 @@ def get_log_input() -> str:
         file_path = input(f"{Colors.CYAN}Путь к файлу: {Colors.RESET}").strip()
         try:
             path = Path(file_path)
-            content = path.read_text(encoding='utf-8')
+            content = path.read_text(encoding="utf-8")
             print_success(f"Файл загружен: {len(content)} байт")
             return content
         except Exception as e:
@@ -136,6 +135,7 @@ def get_sample_logs() -> str:
 # Output formatting
 # =============================================================================
 
+
 def print_results(results: dict):
     """Print pipeline results."""
     print_header("Результаты анализа")
@@ -175,23 +175,39 @@ def print_results(results: dict):
 
         severity_names = {1: "Критический", 2: "Высокий", 3: "Средний", 4: "Низкий"}
         threat_names = {
-            1: "Вторжение", 2: "Malware", 3: "DDoS", 4: "Утечка",
-            5: "Доступ", 6: "Фишинг", 7: "SQL", 8: "XSS", 9: "Брутфорс",
-            10: "Сканирование", 11: "Другое"
+            1: "Вторжение",
+            2: "Malware",
+            3: "DDoS",
+            4: "Утечка",
+            5: "Доступ",
+            6: "Фишинг",
+            7: "SQL",
+            8: "XSS",
+            9: "Брутфорс",
+            10: "Сканирование",
+            11: "Другое",
         }
 
         severity = agent2.get("severity_level_id", 3)
         threat = agent2.get("threat_type_id", 11)
 
-        severity_color = Colors.RED if severity == 1 else (
-            Colors.YELLOW if severity == 2 else Colors.GREEN
+        severity_color = (
+            Colors.RED
+            if severity == 1
+            else (Colors.YELLOW if severity == 2 else Colors.GREEN)
         )
 
-        print(f"Уровень серьезности: {severity_color}{severity}/4 ({severity_names.get(severity, 'N/A')}){Colors.RESET}")
-        print(f"Тип угрозы: {Colors.YELLOW}{threat}/11 ({threat_names.get(threat, 'N/A')}){Colors.RESET}")
+        print(
+            f"Уровень серьезности: {severity_color}{severity}/4 ({severity_names.get(severity, 'N/A')}){Colors.RESET}"
+        )
+        print(
+            f"Тип угрозы: {Colors.YELLOW}{threat}/11 ({threat_names.get(threat, 'N/A')}){Colors.RESET}"
+        )
 
         if agent2.get("mitre_techniques"):
-            print(f"MITRE техники: {Colors.CYAN}{', '.join(agent2['mitre_techniques'])}{Colors.RESET}")
+            print(
+                f"MITRE техники: {Colors.CYAN}{', '.join(agent2['mitre_techniques'])}{Colors.RESET}"
+            )
 
         print_separator()
         print(f"{Colors.CYAN}{agent2.get('final_report', '')}{Colors.RESET}")
@@ -201,12 +217,15 @@ def print_results(results: dict):
     # Summary
     print_header("Итоги")
     print(f"Размер логов: {results.get('log_size', 0)} байт")
-    print(f"Время анализа: {Colors.YELLOW}{results.get('total_time_sec', 0):.1f} сек{Colors.RESET}")
+    print(
+        f"Время анализа: {Colors.YELLOW}{results.get('total_time_sec', 0):.1f} сек{Colors.RESET}"
+    )
 
 
 # =============================================================================
 # Main
 # =============================================================================
+
 
 async def main():
     """Main entry point."""
@@ -214,7 +233,11 @@ async def main():
 
     # Configuration
     print("Настройки:")
-    use_rag_input = input(f"{Colors.CYAN}Использовать RAG? (y/n, по умолчанию y): {Colors.RESET}").strip().lower()
+    use_rag_input = (
+        input(f"{Colors.CYAN}Использовать RAG? (y/n, по умолчанию y): {Colors.RESET}")
+        .strip()
+        .lower()
+    )
     use_rag = use_rag_input != "n"
 
     # Get log input
@@ -260,6 +283,7 @@ async def main():
     except Exception as e:
         print_error(f"Ошибка: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

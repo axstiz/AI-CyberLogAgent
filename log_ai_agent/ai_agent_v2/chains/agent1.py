@@ -5,7 +5,11 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
 from langchain_core.runnables import RunnableSequence
 
 logger = logging.getLogger(__name__)
@@ -59,22 +63,24 @@ USER_PROMPT = """Проанализируй следующий лог-файл �
 
 
 def create_agent1_chain(llm: BaseLanguageModel) -> RunnableSequence:
-    """
-    Create Agent 1 chain for primary log analysis.
+    """Create Agent 1 chain for primary log analysis.
 
     Args:
         llm: LangChain language model (e.g., GigaChat)
 
     Returns:
         RunnableSequence for primary analysis
+
     """
     logger.info("Creating Agent 1 chain for primary log analysis")
 
     # Create prompt template
-    prompt = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
-        HumanMessagePromptTemplate.from_template(USER_PROMPT),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
+            HumanMessagePromptTemplate.from_template(USER_PROMPT),
+        ]
+    )
 
     # Create chain using RunnableSequence (new API, no deprecation)
     chain: RunnableSequence = prompt | llm | StrOutputParser()
@@ -87,8 +93,7 @@ async def analyze_logs_primary(
     llm: BaseLanguageModel,
     log_content: str,
 ) -> dict[str, Any]:
-    """
-    Analyze logs using Agent 1 chain.
+    """Analyze logs using Agent 1 chain.
 
     Args:
         llm: Language model
@@ -96,6 +101,7 @@ async def analyze_logs_primary(
 
     Returns:
         Dictionary with primary analysis
+
     """
     chain = create_agent1_chain(llm)
 

@@ -5,14 +5,13 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from langchain.chains.llm import LLMChain
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.runnables import RunnableSequence, RunnableConfig
+from langchain_core.runnables import RunnableConfig
 
 from ..chains.agent1 import create_agent1_chain
-from ..chains.agent2 import create_agent2_chain, generate_final_report
-from ..chains.rag_chain import retrieve_mitre_context
+from ..chains.agent2 import generate_final_report
 from ..chains.llm import create_gigachat_llm
+from ..chains.rag_chain import retrieve_mitre_context
 from ..knowledge_base.manager import ChromaDBManager
 from ..knowledge_base.mitre_loader import initialize_mitre_knowledge_base
 
@@ -20,14 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class LogAnalysisPipeline:
-    """
-    Complete log analysis pipeline using LangChain.
-    
+    """Complete log analysis pipeline using LangChain.
+
     Flow:
     1. Agent 1: Primary log analysis
     2. RAG: Retrieve MITRE ATT&CK techniques
     3. Agent 2: Generate final report with metadata
-    
+
     Usage:
         pipeline = LogAnalysisPipeline(chroma_mgr, llm)
         result = await pipeline.analyze(log_content)
@@ -35,19 +33,19 @@ class LogAnalysisPipeline:
 
     def __init__(
         self,
-        chroma_mgr: Optional[ChromaDBManager],
-        llm: Optional[BaseLanguageModel] = None,
+        chroma_mgr: ChromaDBManager | None,
+        llm: BaseLanguageModel | None = None,
         use_rag: bool = True,
         rag_top_k: int = 5,
     ):
-        """
-        Initialize pipeline.
-        
+        """Initialize pipeline.
+
         Args:
             chroma_mgr: ChromaDB manager (can be None if use_rag=False)
             llm: Language model (creates default GigaChat if None)
             use_rag: Whether to use RAG
             rag_top_k: Number of techniques to retrieve
+
         """
         self.chroma_mgr = chroma_mgr
         self.use_rag = use_rag and chroma_mgr is not None
@@ -64,24 +62,24 @@ class LogAnalysisPipeline:
     async def analyze(
         self,
         log_content: str,
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
     ) -> dict[str, Any]:
-        """
-        Analyze log content through full pipeline.
-        
+        """Analyze log content through full pipeline.
+
         Args:
             log_content: Raw log content
             config: Optional LangChain config (callbacks, etc.)
-            
+
         Returns:
             Dictionary with all results
+
         """
         start_time = time.time()
         results = {
             "log_size": len(log_content),
             "stages": {},
         }
-        
+
         try:
             # Step 1: Agent 1 - Primary analysis
             logger.info("Step 1: Primary log analysis (Agent 1)")
@@ -97,7 +95,7 @@ class LogAnalysisPipeline:
                 "events_found": events_found,
             }
             logger.info(f"✓ Agent 1 complete: found {events_found} events")
-            
+
             # Step 2: RAG - Retrieve MITRE context
             if self.use_rag and self.chroma_mgr:
                 logger.info("Step 2: RAG - Retrieving MITRE ATT&CK techniques")
@@ -107,14 +105,16 @@ class LogAnalysisPipeline:
                     primary_analysis=primary_analysis,
                     k=self.rag_top_k,
                 )
-                
+
                 results["stages"]["rag"] = {
                     "success": True,
                     "mitre_context": rag_result["mitre_context"],
                     "techniques_count": len(rag_result["mitre_techniques"]),
                     "technique_ids": rag_result["technique_ids"],
                 }
-                logger.info(f"✓ RAG complete: found {len(rag_result['mitre_techniques'])} techniques")
+                logger.info(
+                    f"✓ RAG complete: found {len(rag_result['mitre_techniques'])} techniques"
+                )
             else:
                 logger.info("Step 2: RAG skipped (disabled or unavailable)")
                 results["stages"]["rag"] = {
@@ -122,7 +122,7 @@ class LogAnalysisPipeline:
                     "mitre_context": "RAG not available",
                     "techniques_count": 0,
                 }
-            
+
             # Step 3: Agent 2 - Final report
             logger.info("Step 3: Final report generation (Agent 2)")
             agent2_result = await generate_final_report(
@@ -140,66 +140,66 @@ class LogAnalysisPipeline:
                 "threat_type_id": agent2_result["threat_type_id"],
                 "mitre_techniques": agent2_result["mitre_techniques"],
             }
-            logger.info(f"✓ Agent 2 complete: severity={agent2_result['severity_level_id']}, threat={agent2_result['threat_type_id']}")
-            
+            logger.info(
+                f"✓ Agent 2 complete: severity={agent2_result['severity_level_id']}, threat={agent2_result['threat_type_id']}"
+            )
+
             # Summary
             results["success"] = True
             results["total_time_sec"] = time.time() - start_time
-            
+
             logger.info(f"✓ Pipeline complete in {results['total_time_sec']:.1f}s")
-            
+
         except Exception as e:
             logger.error(f"Pipeline error: {e}")
             results["success"] = False
             results["error"] = str(e)
             results["total_time_sec"] = time.time() - start_time
-        
+
         return results
 
 
 async def create_pipeline(
-    chroma_path: Optional[str] = None,
+    chroma_path: str | None = None,
     use_rag: bool = True,
-    llm_config: Optional[dict] = None,
+    llm_config: dict | None = None,
 ) -> LogAnalysisPipeline:
-    """
-    Create and initialize analysis pipeline.
-    
+    """Create and initialize analysis pipeline.
+
     Convenience function to create pipeline with proper initialization.
-    
+
     Args:
         chroma_path: Path to ChromaDB (auto-creates if needed)
         use_rag: Whether to use RAG
         llm_config: Optional LLM configuration
-        
+
     Returns:
         Initialized LogAnalysisPipeline
+
     """
-    from ..knowledge_base.mitre_loader import initialize_mitre_knowledge_base
-    
     logger.info("Creating analysis pipeline...")
-    
+
     # Initialize ChromaDB if using RAG
     chroma_mgr = None
     if use_rag:
         if chroma_path is None:
             chroma_path = str(Path(__file__).parent.parent / "chroma_db")
-        
+
         logger.info(f"Initializing ChromaDB at {chroma_path}")
         chroma_mgr = initialize_mitre_knowledge_base(
             persist_directory=chroma_path,
         )
-    
+
     # Create LLM
     llm_kwargs = llm_config or {}
     llm = create_gigachat_llm(**llm_kwargs)
-    
+
     # Create pipeline
     pipeline = LogAnalysisPipeline(
         chroma_mgr=chroma_mgr,
         llm=llm,
         use_rag=use_rag,
     )
-    
+
     logger.info("✓ Pipeline created successfully")
     return pipeline

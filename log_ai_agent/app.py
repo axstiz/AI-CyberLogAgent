@@ -726,11 +726,12 @@ async def upload_log_file(
     4. Анализ через GigaChat с учетом ThreatTypes и SeverityLevels
     5. Создание отчета в таблице Reports
     6. Возврат результатов пользователю
-    
+
     Args:
         user_id: ID пользователя
         file: Log file to analyze
         use_v2: Использовать ли AI Agent v2 (по умолчанию True)
+
     """
     try:
         # Проверяем расширение файла
@@ -819,14 +820,16 @@ async def upload_log_file(
                 "report_id": report_id,
                 "gigachat_analysis": analysis_result["description"],
             }
-            
+
             # Добавляем метаданные v2 если доступны
             if use_v2:
                 response["ai_version"] = "v2"
                 if "mitre_techniques" in analysis_result:
                     response["mitre_techniques"] = analysis_result["mitre_techniques"]
                 if "processing_time_ms" in analysis_result:
-                    response["processing_time_ms"] = analysis_result["processing_time_ms"]
+                    response["processing_time_ms"] = analysis_result[
+                        "processing_time_ms"
+                    ]
             else:
                 response["ai_version"] = "v1"
 

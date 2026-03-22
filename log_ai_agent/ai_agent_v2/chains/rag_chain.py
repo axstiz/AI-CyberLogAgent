@@ -1,11 +1,15 @@
 """RAG chain for MITRE ATT&CK retrieval."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
 from langchain_core.runnables import RunnableSequence
 
 from ..knowledge_base.manager import ChromaDBManager
@@ -26,22 +30,24 @@ QUERY_ENHANCEMENT_PROMPT = """Ты - эксперт по поиску инфор
 
 
 def create_query_enhancement_chain(llm: BaseLanguageModel) -> RunnableSequence:
-    """
-    Create chain for enhancing RAG query.
+    """Create chain for enhancing RAG query.
 
     Args:
         llm: Language model
 
     Returns:
         RunnableSequence for query enhancement
+
     """
-    prompt = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate.from_template(
-            "Ты - эксперт по поиску в базе знаний MITRE ATT&CK. "
-            "Извлекай ключевые слова для поиска техник."
-        ),
-        HumanMessagePromptTemplate.from_template(QUERY_ENHANCEMENT_PROMPT),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(
+                "Ты - эксперт по поиску в базе знаний MITRE ATT&CK. "
+                "Извлекай ключевые слова для поиска техник."
+            ),
+            HumanMessagePromptTemplate.from_template(QUERY_ENHANCEMENT_PROMPT),
+        ]
+    )
 
     # Use new RunnableSequence API (no deprecation)
     chain: RunnableSequence = prompt | llm | StrOutputParser()
@@ -54,8 +60,7 @@ def search_mitre_techniques(
     query: str,
     k: int = 5,
 ) -> list[dict]:
-    """
-    Search MITRE ATT&CK techniques using vector similarity.
+    """Search MITRE ATT&CK techniques using vector similarity.
 
     Args:
         chroma_mgr: ChromaDB manager
@@ -64,6 +69,7 @@ def search_mitre_techniques(
 
     Returns:
         List of technique documents with metadata
+
     """
     if not chroma_mgr.is_initialized:
         logger.warning("ChromaDB not initialized, returning empty results")
@@ -83,8 +89,7 @@ async def retrieve_mitre_context(
     k: int = 5,
     use_query_enhancement: bool = True,
 ) -> dict[str, Any]:
-    """
-    Retrieve MITRE context using RAG.
+    """Retrieve MITRE context using RAG.
 
     Flow:
     1. Extract keywords from primary_analysis using LLM
@@ -100,6 +105,7 @@ async def retrieve_mitre_context(
 
     Returns:
         Dictionary with techniques and formatted context
+
     """
     logger.info("Retrieving MITRE ATT&CK context")
 
@@ -111,9 +117,9 @@ async def retrieve_mitre_context(
         try:
             logger.debug("Enhancing search query with LLM...")
             enhancement_chain = create_query_enhancement_chain(llm)
-            enhancement_result = await enhancement_chain.ainvoke({
-                "primary_analysis": primary_analysis[:1000]
-            })
+            enhancement_result = await enhancement_chain.ainvoke(
+                {"primary_analysis": primary_analysis[:1000]}
+            )
             search_query = enhancement_result.strip()
             logger.info(f"✓ Enhanced query: '{search_query}'")
         except Exception as e:
@@ -135,7 +141,11 @@ async def retrieve_mitre_context(
         technique_ids = []
 
     # Format context for Agent 2
-    context_text = chroma_mgr.format_context(results) if results else "Нет релевантных техник MITRE ATT&CK."
+    context_text = (
+        chroma_mgr.format_context(results)
+        if results
+        else "Нет релевантных техник MITRE ATT&CK."
+    )
 
     return {
         "mitre_context": context_text,

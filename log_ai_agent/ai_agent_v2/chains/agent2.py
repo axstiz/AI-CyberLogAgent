@@ -6,7 +6,11 @@ from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
 from langchain_core.runnables import RunnableSequence
 
 logger = logging.getLogger(__name__)
@@ -97,21 +101,23 @@ mitre_techniques: ["<ID техники>", ...]
 
 
 def create_agent2_chain(llm: BaseLanguageModel) -> RunnableSequence:
-    """
-    Create Agent 2 chain for final report generation.
+    """Create Agent 2 chain for final report generation.
 
     Args:
         llm: LangChain language model
 
     Returns:
         RunnableSequence for final report
+
     """
     logger.info("Creating Agent 2 chain for final report generation")
 
-    prompt = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
-        HumanMessagePromptTemplate.from_template(USER_PROMPT),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT),
+            HumanMessagePromptTemplate.from_template(USER_PROMPT),
+        ]
+    )
 
     # Create chain using RunnableSequence (new API)
     chain: RunnableSequence = prompt | llm | StrOutputParser()
@@ -121,17 +127,17 @@ def create_agent2_chain(llm: BaseLanguageModel) -> RunnableSequence:
 
 
 def parse_metadata(report_text: str) -> dict[str, Any]:
-    """
-    Parse metadata from Agent 2 response.
+    """Parse metadata from Agent 2 response.
 
     Args:
         report_text: Full response text
 
     Returns:
         Dictionary with severity, threat_type, mitre_techniques
+
     """
     severity_id = 3  # Default: Medium
-    threat_id = 11   # Default: Other
+    threat_id = 11  # Default: Other
     mitre_techniques = []
 
     try:
@@ -139,7 +145,7 @@ def parse_metadata(report_text: str) -> dict[str, Any]:
         if "---META---" in report_text:
             meta_start = report_text.index("---META---")
             meta_end = report_text.index("---END---", meta_start)
-            meta_section = report_text[meta_start + 10:meta_end].strip()
+            meta_section = report_text[meta_start + 10 : meta_end].strip()
 
             for line in meta_section.split("\n"):
                 line = line.strip()
@@ -171,7 +177,9 @@ def parse_metadata(report_text: str) -> dict[str, Any]:
                         except Exception:
                             pass
 
-            logger.debug(f"Parsed metadata: severity={severity_id}, threat={threat_id}, mitre={mitre_techniques}")
+            logger.debug(
+                f"Parsed metadata: severity={severity_id}, threat={threat_id}, mitre={mitre_techniques}"
+            )
 
     except Exception as e:
         logger.warning(f"Failed to parse metadata: {e}")
@@ -188,8 +196,7 @@ async def generate_final_report(
     primary_analysis: str,
     mitre_context: str,
 ) -> dict[str, Any]:
-    """
-    Generate final report using Agent 2 chain.
+    """Generate final report using Agent 2 chain.
 
     Args:
         llm: Language model
@@ -198,13 +205,16 @@ async def generate_final_report(
 
     Returns:
         Dictionary with final report and metadata
+
     """
     chain = create_agent2_chain(llm)
 
-    result = await chain.ainvoke({
-        "primary_analysis": primary_analysis,
-        "mitre_context": mitre_context,
-    })
+    result = await chain.ainvoke(
+        {
+            "primary_analysis": primary_analysis,
+            "mitre_context": mitre_context,
+        }
+    )
 
     report_text = result
     metadata = parse_metadata(report_text)

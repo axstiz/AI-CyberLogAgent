@@ -1,13 +1,10 @@
 """LangChain wrapper for GigaChat."""
 
 import logging
-from typing import Any, Iterator, List, Optional
+from typing import Any
 
-from langchain_core.callbacks import CallbackManagerForLLMRun
-from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage, SystemMessage
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_gigachat.chat_models import GigaChat as LangChainGigaChat
+
 from log_ai_agent.config.cfg import GIGACHAT_API_KEY
 
 logger = logging.getLogger(__name__)
@@ -21,9 +18,8 @@ def create_gigachat_llm(
     timeout: int = 90,
     **kwargs: Any,
 ) -> LangChainGigaChat:
-    """
-    Create GigaChat LLM instance.
-    
+    """Create GigaChat LLM instance.
+
     Args:
         api_key: GigaChat API key
         model: Model name
@@ -31,12 +27,13 @@ def create_gigachat_llm(
         max_tokens: Maximum tokens in response
         timeout: Request timeout
         **kwargs: Additional arguments
-        
+
     Returns:
         LangChain GigaChat instance
+
     """
     logger.info(f"Creating GigaChat LLM: model={model}, temp={temperature}")
-    
+
     llm = LangChainGigaChat(
         credentials=api_key,
         model=model,
@@ -45,6 +42,6 @@ def create_gigachat_llm(
         verify_ssl_certs=False,
         **kwargs,
     )
-    
+
     logger.info("✓ GigaChat LLM created")
     return llm

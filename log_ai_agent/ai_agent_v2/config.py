@@ -3,7 +3,6 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -26,7 +25,7 @@ class AgentConfig:
     chroma_collection: str = "mitre_collection"
 
     # Embedding settings
-    embedding_model: str = 'answerdotai/ModernBERT-base' # "intfloat/multilingual-e5-base"  # Multilingual, open access
+    embedding_model: str = "answerdotai/ModernBERT-base"  # "intfloat/multilingual-e5-base"  # Multilingual, open access
 
     # Logging settings
     log_callbacks: bool = True
@@ -40,17 +39,15 @@ class AgentConfig:
 
         # Set default ChromaDB path if not provided
         if not self.chroma_path:
-            self.chroma_path = str(
-                Path(__file__).parent / "chroma_db"
-            )
+            self.chroma_path = str(Path(__file__).parent / "chroma_db")
 
     @classmethod
     def from_env(cls) -> "AgentConfig":
-        """
-        Create configuration from environment variables.
+        """Create configuration from environment variables.
 
         Returns:
             AgentConfig instance
+
         """
         return cls(
             gigachat_api_key=os.getenv("GIGACHAT_API_KEY", ""),
@@ -58,11 +55,11 @@ class AgentConfig:
         )
 
     def validate(self) -> bool:
-        """
-        Validate configuration.
+        """Validate configuration.
 
         Returns:
             True if configuration is valid
+
         """
         if not self.gigachat_api_key:
             raise ValueError("GIGACHAT_API_KEY is required")

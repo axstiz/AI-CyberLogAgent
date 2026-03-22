@@ -1,11 +1,10 @@
 """Type definitions for LangGraph compatibility."""
 
-from typing import TypedDict, Optional, List, Any
+from typing import List, Optional, TypedDict
 
 
 class AnalysisState(TypedDict, total=False):
-    """
-    State type for LangGraph (future compatibility).
+    """State type for LangGraph (future compatibility).
 
     This TypedDict defines the state that flows through the analysis pipeline.
     Currently used for type hints, will be used with LangGraph StateGraph.
@@ -20,19 +19,19 @@ class AnalysisState(TypedDict, total=False):
 
     # RAG output
     mitre_context: str
-    mitre_techniques: List[dict]
-    technique_ids: List[str]
+    mitre_techniques: list[dict]
+    technique_ids: list[str]
     search_query: str
 
     # Agent 2 output
     final_report: str
     severity_level_id: int
     threat_type_id: int
-    mitre_techniques_final: List[str]
+    mitre_techniques_final: list[str]
 
     # Metadata
     success: bool
-    error: Optional[str]
+    error: str | None
     total_time_sec: float
     log_size: int
 
@@ -45,13 +44,13 @@ class PipelineResult(TypedDict, total=False):
     total_time_sec: float
 
     # Stage results
-    agent1_result: Optional[dict]
-    rag_result: Optional[dict]
-    agent2_result: Optional[dict]
+    agent1_result: dict | None
+    rag_result: dict | None
+    agent2_result: dict | None
 
     # Error information
-    error: Optional[str]
-    error_stage: Optional[str]
+    error: str | None
+    error_stage: str | None
 
 
 class MITRATechnique(TypedDict):
@@ -61,5 +60,5 @@ class MITRATechnique(TypedDict):
     technique_name: str
     tactic: str
     description: str
-    platforms: List[str]
-    data_sources: List[str]
+    platforms: list[str]
+    data_sources: list[str]

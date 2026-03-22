@@ -18,11 +18,10 @@ logger = logging.getLogger(__name__)
 def initialize_mitre_knowledge_base(
     persist_directory: str,
     collection_name: str = "mitre_collection",
-    embedding_model: Optional[str] = None,
+    embedding_model: str | None = None,
     domain: str = "enterprise-attack",
 ) -> ChromaDBManager:
-    """
-    Initialize ChromaDB and populate with MITRE ATT&CK data.
+    """Initialize ChromaDB and populate with MITRE ATT&CK data.
 
     Args:
         persist_directory: Directory to store ChromaDB
@@ -32,6 +31,7 @@ def initialize_mitre_knowledge_base(
 
     Returns:
         Initialized ChromaDBManager
+
     """
     logger.info("Initializing MITRE ATT&CK knowledge base...")
 
@@ -54,16 +54,20 @@ def initialize_mitre_knowledge_base(
     if stix_file.exists():
         logger.info(f"Loading MITRE ATT&CK from local file: {stix_file}")
         from .local_loader import load_techniques_from_stix
+
         techniques = load_techniques_from_stix(stix_file)
         if techniques:
             count = chroma_mgr.load_mitre_techniques(techniques)
-            logger.info(f"✓ Knowledge base initialized with {count} techniques from local file")
+            logger.info(
+                f"✓ Knowledge base initialized with {count} techniques from local file"
+            )
             return chroma_mgr
 
     # Fallback: Download from GitHub and load
     logger.info("Local MITRE data not found. Downloading from GitHub...")
     try:
         from .github_loader import download_and_load_mitre
+
         count = download_and_load_mitre(chroma_mgr, stix_file)
         logger.info(f"✓ Knowledge base initialized with {count} techniques from GitHub")
         return chroma_mgr

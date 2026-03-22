@@ -1,10 +1,10 @@
 """Pydantic models for AI responses."""
 
 from .schemas import (
-    PrimaryAnalysisResult,
-    MITREResult,
     FinalAnalysisResult,
     FullPipelineResult,
+    MITREResult,
+    PrimaryAnalysisResult,
 )
 
 __all__ = [

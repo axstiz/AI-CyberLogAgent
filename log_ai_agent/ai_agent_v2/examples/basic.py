@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-r"""
-Basic example of AI Agent v2 usage.
+r"""Basic example of AI Agent v2 usage.
 
 This example shows how to:
 1. Create a pipeline
@@ -20,8 +19,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from log_ai_agent.ai_agent_v2.pipeline.full_pipeline import create_pipeline
 from log_ai_agent.ai_agent_v2.callbacks import get_callback_config
+from log_ai_agent.ai_agent_v2.pipeline.full_pipeline import create_pipeline
 
 
 async def main():
@@ -72,7 +71,7 @@ async def main():
         # Agent 2
         if "agent2" in stages:
             agent2 = stages["agent2"]
-            print(f"\nAgent 2:")
+            print("\nAgent 2:")
             print(f"  Severity: {agent2.get('severity_level_id')}/4")
             print(f"  Threat: {agent2.get('threat_type_id')}/11")
             print(f"  MITRE: {agent2.get('mitre_techniques', [])}")
@@ -80,7 +79,7 @@ async def main():
             print("\n" + "-" * 60)
             print("Final Report:")
             print("-" * 60)
-            print(agent2.get('final_report', '')[:500])  # First 500 chars
+            print(agent2.get("final_report", "")[:500])  # First 500 chars
 
         print("\n" + "=" * 60)
         print(f"Total time: {results.get('total_time_sec', 0):.1f}s")
@@ -96,5 +95,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
