@@ -290,6 +290,7 @@ const handleLogin = async () => {
   margin: 2px 0 0;
   color: #ff7c9a;
   font-size: 12px;
+  text-align: center;
 }
 
 .help-text {
