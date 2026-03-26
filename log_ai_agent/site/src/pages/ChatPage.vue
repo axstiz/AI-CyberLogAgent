@@ -1,152 +1,196 @@
 <template>
-  <div class="h-screen flex flex-col">
-    <div class="flex-1 flex flex-col bg-dark-900/30 overflow-hidden">
-      <!-- Окно чата на всю высоту -->
-      <div class="flex-1 flex flex-col overflow-hidden relative ml-9">
-        <!-- Кнопка "Новый чат" в правом верхнем углу -->
-        <button
-          @click="showNewChatModal = true"
-          :disabled="isLoading"
-          class="absolute top-4 right-8 z-20 flex items-center gap-2 px-4 py-2 bg-dark-700 hover:bg-dark-600 disabled:bg-dark-800 disabled:cursor-not-allowed text-dark-300 hover:text-white disabled:text-dark-500 rounded-lg transition-all text-sm font-medium shadow-lg"
-          title="Начать новый чат"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-          </svg>
-          <span>Новый чат</span>
-        </button>
-        
-        <!-- История чата с фиксированной высотой и скроллом -->
-        <div ref="chatContainer" class="flex-1 overflow-y-auto space-y-8 pt-8 pl-8 pr-2 sm:pr-3 md:pr-4 lg:pr-6 xl:pr-8 pb-4 scrollbar-chat">
+  <div class="h-screen flex flex-col relative overflow-hidden">
+    <button
+      @click="showNewChatModal = true"
+      :disabled="isLoading"
+      class="absolute top-6 right-6 z-20 inline-flex items-center gap-2 px-4 py-2 bg-[#2b2d33] hover:bg-[#353842] disabled:bg-[#22242b] disabled:cursor-not-allowed text-[#e6e8ee] hover:text-white disabled:text-dark-500 rounded-xl transition-all text-sm font-medium border border-[#3a3d46]"
+      title="Начать новый чат"
+    >
+      <img src="/pencil_icon.svg" alt="new chat" class="w-4 h-4" />
+      <span>Новый чат</span>
+    </button>
+
+    <div class="relative z-10 flex-1 min-h-0 flex flex-col px-4 sm:px-8">
+      <div
+        v-if="messages.length > 0 || isLoading"
+        ref="chatContainer"
+        class="flex-1 min-h-0 overflow-y-auto pt-8 pb-4 scrollbar-chat"
+      >
+        <div class="mx-auto w-full max-w-3xl space-y-7">
           <div
             v-for="(msg, index) in messages"
             :key="index"
-            class="flex justify-center"
           >
-            <div class="max-w-full sm:max-w-4xl md:max-w-3xl lg:max-w-2xl w-full">
-              <!-- Сообщение пользователя - облачко справа от области агента -->
-              <div
-                v-if="msg.role === 'user'"
-                class="flex justify-end"
-              >
-                <div class="max-w-full sm:max-w-md px-4 py-3 rounded-xl shadow-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white rounded-br-none">
-                  <p class="text-sm leading-relaxed">{{ msg.text }}</p>
-                </div>
-              </div>
-              
-              <!-- Сообщение агента - сплошной текст с подписью -->
-              <div 
-                v-else
-                :class="[
-                  'p-4 rounded-lg transition-all duration-500',
-                  msg.isNew ? 'bg-primary-500/10 border-l-4 border-primary-500 shadow-lg shadow-primary-500/20' : ''
-                ]"
-              >
-                <div v-if="msg.isNew" class="flex items-center gap-2 mb-2">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-500/20 text-primary-400 text-xs font-medium rounded-full animate-pulse">
-                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
-                    </svg>
-                    Новое сообщение
-                  </span>
-                </div>
-                <div 
-                  class="markdown-content text-base leading-relaxed text-dark-200 text-left"
-                  v-html="renderMarkdown(msg.text)"
-                ></div>
-                <p class="text-xs text-dark-500 mt-2 text-left">CyberLog Agent</p>
+            <div
+              v-if="msg.role === 'user'"
+              class="flex justify-end"
+            >
+              <div class="max-w-full sm:max-w-xl px-4 py-3 rounded-2xl rounded-br-md bg-[#7971F0] text-white">
+                <p class="text-sm leading-relaxed break-words whitespace-pre-wrap">{{ msg.text }}</p>
               </div>
             </div>
+
+            <div
+              v-else
+              :class="[
+                'p-4 rounded-xl transition-all duration-500',
+                msg.isNew ? 'bg-[#303a6c]/30 border-l-4 border-[#6b81ff] shadow-[0_10px_35px_rgba(86,112,255,0.25)]' : ''
+              ]"
+            >
+              <div v-if="msg.isNew" class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#5366ff]/20 text-[#9badff] text-xs font-medium rounded-full animate-pulse">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                  </svg>
+                  Новое сообщение
+                </span>
+              </div>
+              <div
+                class="markdown-content text-base leading-relaxed text-dark-200 text-left break-words"
+                v-html="renderMarkdown(msg.text)"
+              ></div>
+              <p class="text-xs text-dark-500 mt-2 text-left">wavescan assistant</p>
+            </div>
           </div>
-          <div v-if="isLoading" class="flex justify-center">
-            <div class="flex gap-1">
-              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 0ms"/>
-              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 150ms"/>
-              <div class="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style="animation-delay: 300ms"/>
+
+          <div v-if="isLoading" class="flex justify-center pb-2">
+            <div class="flex gap-1.5 px-3 py-2 rounded-full bg-[#20232d] border border-[#2c3040]">
+              <div class="w-2 h-2 bg-[#7290ff] rounded-full animate-bounce" style="animation-delay: 0ms"/>
+              <div class="w-2 h-2 bg-[#7290ff] rounded-full animate-bounce" style="animation-delay: 150ms"/>
+              <div class="w-2 h-2 bg-[#7290ff] rounded-full animate-bounce" style="animation-delay: 300ms"/>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Быстрые вопросы (компактные плашки над полем ввода) -->
-        <div class="flex flex-wrap gap-2 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-48 pt-2 pb-1 mt-4">
+      <div v-else class="flex-1"></div>
+
+      <div
+        :class="[
+          'mx-auto w-full max-w-3xl pb-6 shrink-0 transition-all duration-500 ease-out transform',
+          messages.length ? 'translate-y-0 pt-2' : '-translate-y-[24vh]'
+        ]"
+      >
+        <div v-if="messages.length === 0" class="mb-1 text-center select-none">
+          <img
+            src="/wavescan_chat_logo.svg"
+            alt="wavescan agent"
+            class="w-full max-w-[520px] sm:max-w-[620px] mx-auto wave-logo"
+          />
+        </div>
+
+        <div
+          v-if="messages.length > 0"
+          class="flex flex-wrap justify-start gap-3 mb-4"
+        >
           <button
             @click="selectQuickQuestion('Какие рекомендации для предотвращения атак?')"
-            class="px-3 py-1.5 bg-dark-800/50 hover:bg-dark-800 border border-dark-700 hover:border-primary-500/50 rounded-lg text-xs text-dark-300 hover:text-primary-400 transition-all flex items-center gap-1.5"
+            class="quick-pill"
           >
-            <span>🛡️</span>
-            <span>Рекомендации</span>
+            Рекомендации
           </button>
           <button
             @click="selectQuickQuestion('Какие тренды в безопасности?')"
-            class="px-3 py-1.5 bg-dark-800/50 hover:bg-dark-800 border border-dark-700 hover:border-primary-500/50 rounded-lg text-xs text-dark-300 hover:text-primary-400 transition-all flex items-center gap-1.5"
+            class="quick-pill"
           >
-            <span>📈</span>
-            <span>Тренды</span>
+            Тренды
+          </button>
+          <button
+            @click="selectQuickQuestion('Покажи релевантные техники MITRE ATT&CK для этих инцидентов')"
+            class="quick-pill"
+          >
+            MITRE
           </button>
         </div>
 
-        <!-- Ввод сообщения -->
-        <div class="flex gap-3 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-48 py-4 items-start min-h-[116px]">
-          <div class="flex-1 relative">
+        <div class="chat-composer rounded-3xl px-4 py-3 sm:px-5 sm:py-4">
+          <div class="flex flex-col gap-3">
             <textarea
               v-model="inputMessage"
               @keydown.enter.exact.prevent="sendMessage"
+              @keydown.enter.shift.exact="handleShiftEnter"
               ref="messageInput"
               maxlength="500"
               rows="1"
-              class="input w-full resize-none overflow-y-auto pr-32 pb-10 block"
-              placeholder="Напишите вопрос об инцидентах..."
+              class="w-full resize-none overflow-y-auto bg-transparent text-[#f0f2f9] placeholder-[#8c91a1] outline-none px-1 py-1 block"
+              placeholder="Введите текст..."
               :disabled="isLoading || isRateLimited"
-              @input="adjustTextareaHeight"
-              style="min-height: 84px; max-height: 400px; height: auto;"
+              @input="handleMessageInput"
+              style="min-height: 40px; max-height: 200px; height: auto;"
             ></textarea>
-            
-            <!-- Сообщение об ошибке пустого файла -->
-            <div v-if="isEmptyFile" class="absolute bottom-16 right-3 text-xs text-red-500">
+
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".log"
+              @change="handleFileUpload"
+              class="hidden"
+            />
+
+            <div v-if="isEmptyFile" class="text-xs text-red-500 text-right pr-1">
               Файл пустой
             </div>
-            
-            <!-- Счетчик и кнопки внизу справа -->
-            <div class="absolute bottom-2 right-3 flex items-center gap-2">
-              <div class="text-xs px-2 py-1 rounded bg-dark-800/80 text-dark-400">
-                {{ inputMessage.length }}/500
-              </div>
-              
-              <!-- Кнопка загрузки файла логов -->
-              <input
-                ref="fileInput"
-                type="file"
-                accept=".log"
-                @change="handleFileUpload"
-                class="hidden"
-              />
+
+            <div class="flex items-center justify-between gap-3">
               <button
                 @click="$refs.fileInput.click()"
                 :class="[
-                  'btn bg-dark-800 hover:bg-dark-700 border transition-all p-2',
-                  isEmptyFile 
-                    ? 'border-red-500 text-red-400 hover:border-red-400' 
-                    : 'border-dark-700 hover:border-primary-500/50 text-dark-300 hover:text-primary-400'
+                  'w-9 h-9 rounded-xl flex items-center justify-center border transition-all flex-shrink-0',
+                  isEmptyFile
+                    ? 'border-red-500 text-red-400 bg-red-500/10'
+                    : 'border-[#363a46] bg-[#2a2d36] text-[#b7bccb] hover:border-[#6c7dff] hover:text-[#dbe1ff]'
                 ]"
                 title="Загрузить .log файл"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                </svg>
+                <img src="/attachment_icon.svg" alt="attach" class="w-3.5 h-4" />
               </button>
-              
-              <button
-                @click="sendMessage"
-                :disabled="!canSendMessage"
-                class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed p-2"
-                :title="getRateLimitMessage"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M11.5003 12H5.41872M5.24634 12.7972L4.24158 15.7986C3.69128 17.4424 3.41613 18.2643 3.61359 18.7704C3.78506 19.21 4.15335 19.5432 4.6078 19.6701C5.13111 19.8161 5.92151 19.4604 7.50231 18.7491L17.6367 14.1886C19.1797 13.4942 19.9512 13.1471 20.1896 12.6648C20.3968 12.2458 20.3968 11.7541 20.1896 11.3351C19.9512 10.8529 19.1797 10.5057 17.6367 9.81135L7.48483 5.24303C5.90879 4.53382 5.12078 4.17921 4.59799 4.32468C4.14397 4.45101 3.77572 4.78336 3.60365 5.22209C3.40551 5.72728 3.67772 6.54741 4.22215 8.18767L5.24829 11.2793C5.34179 11.561 5.38855 11.7019 5.407 11.8459C5.42338 11.9738 5.42321 12.1032 5.40651 12.231C5.38768 12.375 5.34057 12.5157 5.24634 12.7972Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                </svg>
-              </button>
+
+              <div class="flex items-center gap-2">
+                <div class="text-xs px-2 py-1 rounded-lg bg-[#2a2d36] text-[#9095a5] border border-[#343945]">
+                  {{ inputMessage.length }}/500
+                </div>
+
+                <button
+                  class="w-9 h-9 rounded-xl bg-[#2a2d36] border border-[#363a46] text-[#bcc1cf] hover:text-white hover:border-[#5566ff] transition-colors"
+                  type="button"
+                  disabled
+                  title="Голосовой ввод скоро"
+                >
+                  <img src="/micro_icon.svg" alt="voice" class="w-4 h-4 mx-auto" />
+                </button>
+
+                <button
+                  @click="sendMessage"
+                  :disabled="!canSendMessage"
+                  class="w-9 h-9 rounded-xl bg-[#6675ff] hover:bg-[#7383ff] disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all"
+                  :title="getRateLimitMessage"
+                >
+                  <img src="/send_icon.svg" alt="send" class="w-4 h-4 mx-auto" />
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div v-if="messages.length === 0" class="flex flex-wrap justify-center gap-3 mt-5">
+          <button
+            @click="selectQuickQuestion('Какие рекомендации для предотвращения атак?')"
+            class="quick-pill"
+          >
+            Рекомендации
+          </button>
+          <button
+            @click="selectQuickQuestion('Какие тренды в безопасности?')"
+            class="quick-pill"
+          >
+            Тренды
+          </button>
+          <button
+            @click="selectQuickQuestion('Покажи релевантные техники MITRE ATT&CK для этих инцидентов')"
+            class="quick-pill"
+          >
+            MITRE
+          </button>
         </div>
       </div>
     </div>
@@ -157,13 +201,13 @@
       class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
       @click.self="showNewChatModal = false"
     >
-      <div class="bg-dark-900 rounded-xl max-w-md w-full border border-dark-800">
+      <div class="bg-[#252525] rounded-xl max-w-md w-full border border-[#3C3C3C]">
         <!-- Заголовок модального окна -->
-        <div class="bg-dark-900 border-b border-dark-800 px-6 py-4 flex items-center justify-between">
+        <div class="bg-[#252525] rounded-xl px-6 py-4 flex items-center justify-between">
           <h2 class="text-xl font-bold text-white">Подтверждение</h2>
           <button
             @click="showNewChatModal = false"
-            class="text-dark-400 hover:text-white transition-colors p-1"
+            class="hover:text-white transition-colors p-1"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -173,21 +217,21 @@
 
         <!-- Содержимое модального окна -->
         <div class="p-6">
-          <p class="text-dark-300 mb-6">
+          <p class="mb-6">
             Вы уверены, что хотите начать новый чат? Все сообщения будут удалены, 
-            а контекст GigaChat агента будет полностью очищен.
+            а контекст ассистента будет полностью очищен.
           </p>
           <div class="flex gap-3 justify-end">
             <button
               @click="showNewChatModal = false"
-              class="px-4 py-2 bg-dark-800 hover:bg-dark-700 text-dark-300 hover:text-white rounded-lg transition-colors"
+              class="px-4 py-2 bg-[#343434] hover:bg-[#444444] rounded-lg transition-colors"
             >
               Отмена
             </button>
             <button
               @click="confirmNewChat"
               :disabled="isLoading"
-              class="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-dark-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              class="px-4 py-2 bg-[#9F2727] hover:bg-[#C22D2D] disabled:bg-dark-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
               Удалить и начать новый
             </button>
@@ -226,11 +270,9 @@ const renderMarkdown = (text) => {
 const appStore = useAppStore()
 const route = useRoute()
 const chatContainer = ref(null)
-const fileInput = ref(null)
 const messageInput = ref(null)
 const inputMessage = ref('')
 const isLoading = ref(false)
-const uploadedLogFile = ref(null)
 const lastMessageTime = ref(0)
 const isRateLimited = ref(false)
 const isEmptyFile = ref(false)
@@ -261,12 +303,8 @@ const loadChatHistory = async () => {
     const userId = appStore.currentUser?.id
     if (!userId) {
       console.error('User not authenticated')
-      // Показываем начальное приветствие если пользователь не авторизован
-      messages.value = [{
-        role: 'ai',
-        text: 'Привет! Я CyberLog ассистент. Я помогу вам анализировать инциденты безопасности и предоставлять рекомендации. Какой у вас вопрос?',
-        isNew: false,
-      }]
+      // Для нового/неавторизованного состояния чат остается пустым
+      messages.value = []
       return
     }
     
@@ -280,23 +318,15 @@ const loadChatHistory = async () => {
         isNew: false,
       }))
     } else {
-      // Если история пуста, показываем приветствие
-      messages.value = [{
-        role: 'ai',
-        text: 'Привет! Я CyberLog ассистент. Я помогу вам анализировать инциденты безопасности и предоставлять рекомендации. Какой у вас вопрос?',
-        isNew: false,
-      }]
+      // Если история пуста, оставляем чат пустым
+      messages.value = []
     }
     
     scrollToBottom()
   } catch (error) {
     console.error('Error loading chat history:', error)
-    // В случае ошибки показываем приветствие
-    messages.value = [{
-      role: 'ai',
-      text: 'Привет! Я CyberLog ассистент. Я помогу вам анализировать инциденты безопасности и предоставлять рекомендации. Какой у вас вопрос?',
-      isNew: false,
-    }]
+    // В случае ошибки также оставляем чат пустым
+    messages.value = []
   }
 }
 
@@ -359,12 +389,6 @@ const handleVisibilityChange = () => {
   }
 }
 
-onMounted(() => {
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  // Очищаем при монтировании компонента
-  clearNotifications()
-})
-
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   // Очищаем таймер при размонтировании
@@ -412,6 +436,45 @@ const adjustTextareaHeight = () => {
     const newHeight = Math.min(textarea.scrollHeight, 400) // Максимум 400px
     textarea.style.height = `${newHeight}px`
   })
+}
+
+const normalizeMessageText = (value) => {
+  if (!value) return ''
+
+  // Нормализуем переносы и удаляем ведущие переносы, если нет текста перед ними
+  let normalized = value.replace(/\r\n/g, '\n').replace(/^\n+/, '')
+
+  // Между текстовыми фрагментами разрешаем только один перенос строки
+  normalized = normalized.replace(/\n{2,}/g, '\n')
+
+  return normalized
+}
+
+const handleMessageInput = () => {
+  const normalized = normalizeMessageText(inputMessage.value)
+  if (normalized !== inputMessage.value) {
+    inputMessage.value = normalized
+  }
+  adjustTextareaHeight()
+}
+
+const handleShiftEnter = (event) => {
+  const currentValue = inputMessage.value || ''
+
+  // Если текста нет, не добавляем перенос
+  if (!currentValue.trim()) {
+    event.preventDefault()
+    return
+  }
+
+  const textarea = event.target
+  const caretPos = textarea?.selectionStart ?? currentValue.length
+  const beforeCaret = currentValue.slice(0, caretPos)
+
+  // Не даем вставлять второй перенос подряд до следующего текста
+  if (beforeCaret.endsWith('\n')) {
+    event.preventDefault()
+  }
 }
 
 const sendMessage = async () => {
@@ -543,7 +606,7 @@ const handleFileUpload = async (event) => {
   }
   
   // Показываем сообщение о загрузке
-  const uploadMsg = `📤 Загрузка файла "${file.name}" (${(file.size / 1024).toFixed(2)} KB)...`
+  const uploadMsg = `Загрузка файла "${file.name}" (${(file.size / 1024).toFixed(2)} KB)`
   messages.value.push({
     role: 'user',
     text: uploadMsg,
@@ -615,25 +678,12 @@ const confirmNewChat = async () => {
     showNewChatModal.value = false
 
     // Очищаем сообщения в БД и контекст GigaChat
-    const response = await chat.clearMessages(userId)
+    await chat.clearMessages(userId)
 
     // Очищаем локальный массив сообщений
     messages.value = []
 
-    // Загружаем начальное приветствие и сохраняем его в БД
-    const welcomeMessage = 'Привет! Я CyberLog ассистент. Я помогу вам анализировать инциденты безопасности и предоставлять рекомендации. Какой у вас вопрос?'
-    
-    messages.value.push({
-      role: 'ai',
-      text: welcomeMessage,
-      isNew: false,
-    })
-
-    // Сохраняем приветствие в БД с ролью 'agent'
-    await chat.sendMessage(userId, 'agent', welcomeMessage)
-
     // Показываем уведомление с информацией об очистке
-    const deletedCount = response.data?.deleted_count || 0
     appStore.addNotification(
       `Новый чат начат`, 
       'success'
@@ -649,9 +699,42 @@ const confirmNewChat = async () => {
 }
 </script>
 <style scoped>
+.wave-glow {
+  text-shadow: 0 0 24px rgba(103, 124, 255, 0.95), 0 0 58px rgba(93, 118, 255, 0.65);
+}
+
+.chat-composer {
+  background: #252525;
+  border: 1px solid #3C3C3C;
+  box-shadow: none;
+}
+
+.quick-pill {
+  background: #242424;
+  border: 1px solid #3C3C3C;
+  color: #c2c2c2;
+  border-radius: 14px;
+  padding: 9px 22px;
+  font-size: 0.8rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.quick-pill:hover {
+  border-color: rgba(103, 124, 255, 0.8);
+  color: #f3f5ff;
+  transform: translateY(-1px);
+}
+
 /* Стили для markdown контента */
+.markdown-content {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .markdown-content :deep(p) {
   margin: 0.5em 0;
+  overflow-wrap: anywhere;
 }
 
 .markdown-content :deep(p:first-child) {
@@ -672,18 +755,18 @@ const confirmNewChat = async () => {
 }
 
 .markdown-content :deep(code) {
-  background-color: rgba(79, 70, 229, 0.1);
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  background-color: rgba(91, 117, 255, 0.12);
+  border: 1px solid rgba(91, 117, 255, 0.28);
   border-radius: 4px;
   padding: 2px 6px;
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
   font-size: 0.9em;
-  color: #c4b5fd;
+  color: #c7d2ff;
 }
 
 .markdown-content :deep(pre) {
   background-color: rgba(17, 24, 39, 0.8);
-  border: 1px solid rgba(79, 70, 229, 0.3);
+  border: 1px solid rgba(91, 117, 255, 0.34);
   border-radius: 8px;
   padding: 12px;
   margin: 12px 0;
@@ -707,6 +790,7 @@ const confirmNewChat = async () => {
 
 .markdown-content :deep(li) {
   margin: 4px 0;
+  overflow-wrap: anywhere;
 }
 
 .markdown-content :deep(ul li) {
@@ -718,7 +802,7 @@ const confirmNewChat = async () => {
 }
 
 .markdown-content :deep(blockquote) {
-  border-left: 4px solid rgba(79, 70, 229, 0.5);
+  border-left: 4px solid rgba(91, 117, 255, 0.6);
   padding-left: 12px;
   margin: 12px 0;
   color: #9ca3af;
@@ -738,7 +822,7 @@ const confirmNewChat = async () => {
 
 .markdown-content :deep(h1) {
   font-size: 1.5em;
-  border-bottom: 2px solid rgba(79, 70, 229, 0.3);
+  border-bottom: 2px solid rgba(91, 117, 255, 0.34);
   padding-bottom: 8px;
 }
 
@@ -755,18 +839,18 @@ const confirmNewChat = async () => {
 }
 
 .markdown-content :deep(a) {
-  color: #818cf8;
+  color: #90a2ff;
   text-decoration: underline;
   transition: color 0.2s;
 }
 
 .markdown-content :deep(a:hover) {
-  color: #a5b4fc;
+  color: #b5c2ff;
 }
 
 .markdown-content :deep(hr) {
   border: none;
-  border-top: 1px solid rgba(79, 70, 229, 0.3);
+  border-top: 1px solid rgba(91, 117, 255, 0.34);
   margin: 16px 0;
 }
 
@@ -779,13 +863,14 @@ const confirmNewChat = async () => {
 
 .markdown-content :deep(th),
 .markdown-content :deep(td) {
-  border: 1px solid rgba(79, 70, 229, 0.3);
+  border: 1px solid rgba(91, 117, 255, 0.34);
   padding: 8px 12px;
   text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .markdown-content :deep(th) {
-  background-color: rgba(79, 70, 229, 0.2);
+  background-color: rgba(91, 117, 255, 0.2);
   font-weight: 600;
   color: #e5e7eb;
 }

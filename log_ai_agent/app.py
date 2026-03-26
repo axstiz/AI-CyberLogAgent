@@ -11,12 +11,28 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from log_ai_agent.ai_agent.gigachat import (
-    analyze_log_with_gigachat,
+from log_ai_agent.ai_agent_v2.app_integration import (
+    analyze_log_v2,
+    close_pipeline,
+    warmup_pipeline,
+)
+from log_ai_agent.ai_agent_v2.chat_integration import (
     clear_user_context,
     process_chat_message,
 )
 from log_ai_agent.config import commands
+from log_ai_agent.config.cfg import (
+    KAFKA_AUTO_OFFSET_RESET,
+    KAFKA_BOOTSTRAP_SERVERS,
+    KAFKA_ENABLED,
+    KAFKA_GROUP_ID,
+    KAFKA_TOPIC,
+    PIPELINE_COLLECTED_LOGS_FILE,
+    PIPELINE_CONSUMED_LOGS_FILE,
+    PIPELINE_KAFKA_AUTO_ANALYZE,
+)
+from log_ai_agent.pipeline.kafka_consumer import KafkaLogBatchConsumer
+from log_ai_agent.pipeline.log_ingest_api import router as pipeline_ingest_router
 
 # Загрузка переменных окружения из .env файла
 env_path = Path(__file__).parent / ".env"
@@ -34,13 +50,139 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
 
 
+async def _process_kafka_log_batch(payload: dict) -> None:
+    """Analyze Kafka batch with AI Agent v2 pipeline and store result in DB."""
+    if not PIPELINE_KAFKA_AUTO_ANALYZE:
+        return
+
+    batch = payload.get("log") if isinstance(payload.get("log"), dict) else payload
+
+    records = batch.get("records")
+    if not isinstance(records, list) or not records:
+        return
+
+    messages = []
+    for record in records:
+        if isinstance(record, dict):
+            message = str(record.get("message", "")).strip()
+            if message:
+                messages.append(message)
+
+    if not messages:
+        return
+
+    log_content = "\n".join(messages)
+    analysis_result = await analyze_log_v2(log_content)
+
+    source_file = batch.get("source_file", "unknown")
+    source_files = batch.get("source_files")
+    source_label = (
+        ", ".join(source_files)
+        if isinstance(source_files, list) and source_files
+        else source_file
+    )
+    events_found = analysis_result.get("events_found", 0)
+    report_description = (
+        "AI pipeline: Agent1 -> RAG -> Agent2\n"
+        f"Источник: {source_label}\n"
+        f"Размер батча: {batch.get('batch_size', len(messages))}\n"
+        f"Событий выделено Agent1: {events_found}\n"
+        f"\n{analysis_result['description']}"
+    )
+
+    conn = await asyncpg.connect(DATABASE_URL, timeout=10)
+    try:
+        log_row = await conn.fetchrow(
+            """
+            INSERT INTO public."Logs" (file_content, date)
+            VALUES ($1, NOW())
+            RETURNING log_id
+            """,
+            log_content,
+        )
+        log_id = log_row["log_id"]
+
+        await conn.execute(
+            """
+            INSERT INTO public."Reports" (
+                log_id,
+                severity_level_id,
+                threat_type_id,
+                description,
+                created_at
+            )
+            VALUES ($1, $2, $3, $4, NOW())
+            """,
+            log_id,
+            analysis_result["severity_level_id"],
+            analysis_result["threat_type_id"],
+            report_description,
+        )
+
+        chat_message = (
+            "# Автоотчет по входящим логам\n\n"
+            f"{report_description}\n\n"
+            "_Сообщение добавлено автоматически из Kafka pipeline._"
+        )
+        inserted_messages = await conn.execute(
+            """
+            INSERT INTO public."Messages" (user_id, role, content, created_at)
+            SELECT user_id, 'agent', $1, NOW()
+            FROM public."Users"
+            """,
+            chat_message,
+        )
+
+        logger.info(
+            "Kafka batch analyzed and saved via v2: source=%s, records=%s, events_found=%s, log_id=%s",
+            source_label,
+            len(messages),
+            events_found,
+            log_id,
+        )
+        logger.info("Kafka report auto-posted to chat: %s", inserted_messages)
+    finally:
+        await conn.close()
+
+
+kafka_log_consumer = KafkaLogBatchConsumer(
+    enabled=KAFKA_ENABLED,
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+    topic=KAFKA_TOPIC,
+    group_id=KAFKA_GROUP_ID,
+    auto_offset_reset=KAFKA_AUTO_OFFSET_RESET,
+    output_file=PIPELINE_CONSUMED_LOGS_FILE,
+    payload_handler=_process_kafka_log_batch,
+)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle events для приложения"""
     logger.info("🚀 Starting AI CyberLog Agent Backend...")
     logger.info(f"📊 Database URL: {DATABASE_URL}")
+    logger.info(f"📦 Pipeline collected logs file: {PIPELINE_COLLECTED_LOGS_FILE}")
+
+    try:
+        logger.info("🔥 Warming up AI Agent v2 pipeline...")
+        await warmup_pipeline()
+        logger.info("✅ AI Agent v2 pipeline warmup complete")
+    except Exception:
+        logger.exception(
+            "AI Agent v2 pipeline warmup failed during startup; will retry on first request"
+        )
+
+    if KAFKA_ENABLED:
+        await kafka_log_consumer.start()
+
     yield
+
+    if KAFKA_ENABLED:
+        await kafka_log_consumer.stop()
+
     logger.info("🛑 Shutting down AI CyberLog Agent Backend...")
+    # Close AI Agent v2 resources
+    await close_pipeline()
 
 
 # Создание FastAPI приложения
@@ -50,6 +192,7 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+app.include_router(pipeline_ingest_router)
 
 # Настройка CORS
 app.add_middleware(
@@ -709,7 +852,11 @@ async def send_chat_message(request: ChatSendRequest):
 
 
 @app.post("/api/logs/upload")
-async def upload_log_file(user_id: int, file: UploadFile = File(...)):
+async def upload_log_file(
+    user_id: int,
+    file: UploadFile = File(...),
+    use_v2: bool = True,
+):
     """Загрузка и анализ лог-файла.
 
     Процесс:
@@ -719,6 +866,12 @@ async def upload_log_file(user_id: int, file: UploadFile = File(...)):
     4. Анализ через GigaChat с учетом ThreatTypes и SeverityLevels
     5. Создание отчета в таблице Reports
     6. Возврат результатов пользователю
+
+    Args:
+        user_id: ID пользователя
+        file: Log file to analyze
+        use_v2: Deprecated. Анализ всегда выполняется через AI Agent v2.
+
     """
     try:
         # Проверяем расширение файла
@@ -754,8 +907,10 @@ async def upload_log_file(user_id: int, file: UploadFile = File(...)):
             f"размер: {len(content_str)} байт"
         )
 
-        # Анализируем лог через GigaChat
-        analysis_result = await analyze_log_with_gigachat(content_str)
+        if not use_v2:
+            logger.info("Параметр use_v2=false устарел, используется AI Agent v2")
+        logger.info("Используем AI Agent v2 для анализа")
+        analysis_result = await analyze_log_v2(content_str)
 
         # Сохраняем лог в БД
         conn = await asyncpg.connect(DATABASE_URL, timeout=10)
@@ -775,10 +930,10 @@ async def upload_log_file(user_id: int, file: UploadFile = File(...)):
             report_row = await conn.fetchrow(
                 """
                 INSERT INTO public."Reports" (
-                    log_id, 
-                    severity_level_id, 
-                    threat_type_id, 
-                    description, 
+                    log_id,
+                    severity_level_id,
+                    threat_type_id,
+                    description,
                     created_at
                 )
                 VALUES ($1, $2, $3, $4, NOW())
@@ -796,12 +951,21 @@ async def upload_log_file(user_id: int, file: UploadFile = File(...)):
                 f"Log ID: {log_id}, Report ID: {report_id}"
             )
 
-            return {
+            response = {
                 "success": True,
                 "log_id": log_id,
                 "report_id": report_id,
                 "gigachat_analysis": analysis_result["description"],
             }
+
+            # Добавляем метаданные v2 если доступны
+            response["ai_version"] = "v2"
+            if "mitre_techniques" in analysis_result:
+                response["mitre_techniques"] = analysis_result["mitre_techniques"]
+            if "processing_time_ms" in analysis_result:
+                response["processing_time_ms"] = analysis_result["processing_time_ms"]
+
+            return response
 
         finally:
             await conn.close()
