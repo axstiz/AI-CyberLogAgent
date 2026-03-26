@@ -4,7 +4,7 @@
       <div class="mb-6 md:mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">Статистика</h1>
-          <p class="text-sm sm:text-base text-dark-400">График и распределение по уровням и типам</p>
+          <p class="text-sm sm:text-base text-[#7f8799]">График и распределение по уровням и типам</p>
         </div>
         
         <DatePeriodPicker 
@@ -16,21 +16,21 @@
       </div>
 
       <!-- Временная шкала с выбором периода -->
-      <div class="card mb-6 md:mb-8">
+      <div class="mb-6 rounded-xl border border-[#2d313d] bg-[#252525] p-6 md:mb-8">
         <h2 class="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
-          <svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-5 h-5 text-[#8a83ff]" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
           </svg>
           Активность по {{ periodType === 'week' ? 'дням' : 'дням месяца' }}
         </h2>
 
-        <div v-if="loadingActivity" class="text-center py-8 text-dark-400 text-sm sm:text-base">
+        <div v-if="loadingActivity" class="text-center py-8 text-[#7f8799] text-sm sm:text-base">
           Загрузка данных активности...
         </div>
         <div v-else class="h-48 sm:h-56 md:h-64 flex items-end justify-center gap-1 sm:gap-2 overflow-x-auto pt-2">
           <div v-for="(item, index) in activityData" :key="index" class="flex flex-col items-center gap-1 sm:gap-2 group flex-shrink-0 relative">
             <div
-              class="bg-gradient-to-t from-primary-600 to-primary-500 rounded-t-lg hover:from-primary-500 hover:to-primary-400 transition-all duration-300 shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 cursor-pointer relative overflow-visible"
+              class="bg-gradient-to-t from-[#646ff2] to-[#7c74f5] rounded-t-lg hover:from-[#6f79ff] hover:to-[#8f88ff] transition-all duration-300 shadow-lg shadow-[#6d74f0]/20 group-hover:shadow-[#6d74f0]/40 cursor-pointer relative overflow-visible"
               :class="periodType === 'week' ? 'w-8 sm:w-10' : 'w-4 sm:w-6'"
               :style="{ height: Math.max(item.count * 20, 4) + 'px' }"
             >
@@ -39,55 +39,55 @@
             <!-- Подсказка справа для высоких столбиков, сверху для низких -->
             <div 
               v-if="item.count * 20 > 150"
-              class="absolute left-full ml-2 top-0 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-dark-700"
+              class="absolute left-full ml-2 top-0 bg-[#252525] text-[#d9dfec] text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-[#2d313d]"
             >
               {{ item.count }} {{ pluralize(item.count, 'инцидент', 'инцидента', 'инцидентов') }}
             </div>
             <div 
               v-else
-              class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-dark-700"
+              class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-[#252525] text-[#d9dfec] text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-[#2d313d]"
             >
               {{ item.count }} {{ pluralize(item.count, 'инцидент', 'инцидента', 'инцидентов') }}
             </div>
-            <span class="text-xs text-dark-500 group-hover:text-dark-400 transition-colors">{{ getLabel(index, item.date) }}</span>
+            <span class="text-xs text-[#6d7588] group-hover:text-[#8f97ab] transition-colors">{{ getLabel(index, item.date) }}</span>
           </div>
         </div>
       </div>
 
       <!-- Блок статистики по уровням серьезности (из БД) -->
       <div class="mb-6 md:mb-8">
-        <div class="card">
+        <div class="rounded-xl border border-[#2d313d] bg-[#252525] p-6">
           <h2 class="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
-            <svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="w-5 h-5 text-[#8a83ff]" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
             </svg>
             Уровень серьезности
           </h2>
-          <div v-if="loading" class="text-center py-8 text-dark-400">
+          <div v-if="loading" class="text-center py-8 text-[#7f8799]">
             Загрузка данных...
           </div>
           <div v-else-if="severityStats.length > 0" class="space-y-3 sm:space-y-4">
             <div v-for="severity in severityStats" :key="severity.id" class="group relative">
               <div class="flex justify-between mb-2">
-                <span class="text-sm sm:text-base text-dark-400">{{ severity.name }}</span>
+                <span class="text-sm sm:text-base text-[#919aac]">{{ severity.name }}</span>
                 <span class="text-sm sm:text-base font-semibold" :class="getSeverityColor(severity.name)">
                   {{ severity.count }}
                 </span>
               </div>
-              <div class="bg-dark-800/50 rounded-full h-2 overflow-hidden relative">
+              <div class="bg-[#252525] rounded-full h-2 overflow-hidden relative">
                 <div
                   class="h-2 rounded-full transition-all duration-500"
                   :class="getSeverityGradient(severity.name)"
                   :style="{ width: widthPercent(severity.count, totalSeverityCount) + '%' }"
                 />
                 <!-- Всплывающая подсказка -->
-                <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-dark-900 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#252525] text-[#d9dfec] text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 border border-[#2d313d]">
                   {{ severity.count }} {{ pluralize(severity.count, 'инцидент', 'инцидента', 'инцидентов') }}
                 </div>
               </div>
             </div>
           </div>
-          <div v-else class="text-center py-8 text-dark-400">
+          <div v-else class="text-center py-8 text-[#7f8799]">
             Нет данных
           </div>
         </div>
@@ -95,29 +95,29 @@
 
       <!-- Блок статистики по типам угроз (из БД) -->
       <div class="mb-6 md:mb-8">
-        <div class="card">
+        <div class="rounded-xl border border-[#2d313d] bg-[#252525] p-6">
           <h2 class="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
-            <svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="w-5 h-5 text-[#8a83ff]" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
             </svg>
             Тип угрозы
           </h2>
-          <div v-if="loading" class="text-center py-8 text-dark-400">
+          <div v-if="loading" class="text-center py-8 text-[#7f8799]">
             Загрузка данных...
           </div>
           <div v-else-if="threatStats.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div 
               v-for="threat in threatStats" 
               :key="threat.id"
-              class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-dark-800/30 rounded-lg border border-dark-800 hover:border-dark-700 transition-colors gap-2"
+              class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-[#252525]/65 rounded-lg border border-[#2d313d] hover:border-[#3b4150] transition-colors gap-2"
             >
-              <span class="text-sm sm:text-base text-dark-300 break-words">{{ threat.name }}</span>
-              <span class="badge text-xs sm:text-sm whitespace-nowrap" :class="getThreatBadgeClass(threat.count)">
+              <span class="text-sm sm:text-base text-[#c7cedf] break-words">{{ threat.name }}</span>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap" :class="getThreatBadgeClass(threat.count)">
                 {{ threat.count }} {{ pluralize(threat.count, 'инцидент', 'инцидента', 'инцидентов') }}
               </span>
             </div>
           </div>
-          <div v-else class="text-center py-8 text-dark-400">
+          <div v-else class="text-center py-8 text-[#7f8799]">
             Нет данных
           </div>
         </div>
@@ -246,31 +246,31 @@ function widthPercent(count, total) {
 // Получить цвет для уровня серьезности
 function getSeverityColor(name) {
   const colors = {
-    'Критический': 'text-danger-400',
-    'Высокий': 'text-warning-400',
-    'Средний': 'text-primary-400',
-    'Низкий': 'text-success-400'
+    'Критический': 'text-[#ff7a80]',
+    'Высокий': 'text-[#ffbe76]',
+    'Средний': 'text-[#9088ff]',
+    'Низкий': 'text-[#64d1b4]'
   }
-  return colors[name] || 'text-dark-400'
+  return colors[name] || 'text-[#9ea6b9]'
 }
 
 // Получить градиент для уровня серьезности
 function getSeverityGradient(name) {
   const gradients = {
-    'Критический': 'bg-gradient-to-r from-danger-600 to-danger-500',
-    'Высокий': 'bg-gradient-to-r from-warning-600 to-warning-500',
-    'Средний': 'bg-gradient-to-r from-primary-600 to-primary-500',
-    'Низкий': 'bg-gradient-to-r from-success-600 to-success-500'
+    'Критический': 'bg-gradient-to-r from-[#d74f59] to-[#ff7a80]',
+    'Высокий': 'bg-gradient-to-r from-[#ce8c3d] to-[#ffbe76]',
+    'Средний': 'bg-gradient-to-r from-[#5e68e7] to-[#8f88ff]',
+    'Низкий': 'bg-gradient-to-r from-[#3ea88d] to-[#64d1b4]'
   }
-  return gradients[name] || 'bg-gradient-to-r from-dark-600 to-dark-500'
+  return gradients[name] || 'bg-gradient-to-r from-[#495064] to-[#656d82]'
 }
 
 // Получить класс badge для угрозы
 function getThreatBadgeClass(count) {
-  if (count === 0) return 'badge-info'
-  if (count >= 10) return 'badge-critical'
-  if (count >= 5) return 'badge-warning'
-  return 'badge-info'
+  if (count === 0) return 'bg-[#5f66ff]/15 text-[#a8b0ff] border border-[#5f66ff]/25'
+  if (count >= 10) return 'bg-[#ff7a80]/12 text-[#ff9ca2] border border-[#ff7a80]/30'
+  if (count >= 5) return 'bg-[#ffbe76]/12 text-[#ffd09c] border border-[#ffbe76]/30'
+  return 'bg-[#5f66ff]/15 text-[#a8b0ff] border border-[#5f66ff]/25'
 }
 
 // Склонение слов
