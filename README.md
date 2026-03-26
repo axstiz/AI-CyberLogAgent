@@ -152,6 +152,35 @@ register
 
 ![Страница авторизации](./log_ai_agent/src/page1.png)
 
+![Чат с ассистентом](./log_ai_agent/src/page2.png)
+
+![История отчетов](./log_ai_agent/src/page3.png)
+
+![Статистика инцидентов](./log_ai_agent/src/page4.png)
+
+## Структура репозитория
+
+```
+AI-CyberLogAgent/
+└── log_ai_agent                    # Проект
+    ├── ai_agent_v2                 # Агент
+    ├── config                      # Конфигурация для консоли администратора
+    ├── pipeline                    # Получение и обработка логов
+    ├── site                        # Веб-интерфейс
+    ├── src                         # Файлы для документации
+    ├── vector                      # Первичная обработка логов
+    ├── .env.example                # Пример файла переменных окружения
+    ├── app.py                      # Главный файл сервиса
+    ├── docker-compose.yml          # Конфигурация инфраструктуры проекта
+    ├── Dockerfile                  # Конфигурация back-end контейнера
+    └── init-db.sql                 # Скрипт инициализации базы данных
+├── .gitignore 
+├── FUNCTIONAL_SPECIFICATION.md     # Текущее функциональное задание
+├── README.md                       # Документация
+├── pyproject.toml                  # Конфигурация проекта Python
+└── uv.lock                         # Зафиксированные зависимости
+```
+
 ## Схема БД
 
 ### Таблица Users

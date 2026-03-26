@@ -606,7 +606,7 @@ const handleFileUpload = async (event) => {
   }
   
   // Показываем сообщение о загрузке
-  const uploadMsg = `📤 Загрузка файла "${file.name}" (${(file.size / 1024).toFixed(2)} KB)...`
+  const uploadMsg = `Загрузка файла "${file.name}" (${(file.size / 1024).toFixed(2)} KB)`
   messages.value.push({
     role: 'user',
     text: uploadMsg,
