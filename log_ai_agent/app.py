@@ -164,12 +164,12 @@ async def lifespan(app: FastAPI):
     logger.info(f"📦 Pipeline collected logs file: {PIPELINE_COLLECTED_LOGS_FILE}")
 
     try:
-        logger.info("🔥 Warming up AI Agent v2 pipeline...")
+        logger.info("Прогрев AI-пайплайна запущен. Ожидайте, пожалуйста...")
         await warmup_pipeline()
-        logger.info("✅ AI Agent v2 pipeline warmup complete")
+        logger.info("Прогрев AI-пайплайна завершен. Система готова к работе.")
     except Exception:
         logger.exception(
-            "AI Agent v2 pipeline warmup failed during startup; will retry on first request"
+            "Ошибка во время прогрева AI-пайплайна при старте; повторная попытка будет выполнена при первом запросе"
         )
 
     if KAFKA_ENABLED:
