@@ -74,7 +74,7 @@
                   {{ severity.count }}
                 </span>
               </div>
-              <div class="bg-[#252525] rounded-full h-2 overflow-hidden relative">
+              <div class="bg-[#373737] rounded-full h-2 overflow-hidden relative">
                 <div
                   class="h-2 rounded-full transition-all duration-500"
                   :class="getSeverityGradient(severity.name)"
