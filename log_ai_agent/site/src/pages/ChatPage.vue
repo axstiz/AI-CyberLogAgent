@@ -92,18 +92,21 @@
         >
           <button
             @click="selectQuickQuestion('Какие рекомендации для предотвращения атак?')"
+            :disabled="isQuickQuestionBlocked"
             class="quick-pill"
           >
             Рекомендации
           </button>
           <button
             @click="selectQuickQuestion('Какие тренды в безопасности?')"
+            :disabled="isQuickQuestionBlocked"
             class="quick-pill"
           >
             Тренды
           </button>
           <button
             @click="selectQuickQuestion('Покажи релевантные техники MITRE ATT&CK для этих инцидентов')"
+            :disabled="isQuickQuestionBlocked"
             class="quick-pill"
           >
             MITRE
@@ -119,7 +122,10 @@
               ref="messageInput"
               maxlength="500"
               rows="1"
-              class="w-full resize-none overflow-y-auto bg-transparent text-[#f0f2f9] placeholder-[#8c91a1] outline-none px-1 py-1 block"
+              :class="[
+                'w-full resize-none overflow-y-auto bg-transparent text-[#f0f2f9] outline-none px-1 py-1 block',
+                isInputBlocked ? 'placeholder-[#616776]' : 'placeholder-[#8c91a1]'
+              ]"
               placeholder="Введите текст..."
               :disabled="isLoading || isRateLimited"
               @input="handleMessageInput"
@@ -141,11 +147,12 @@
             <div class="flex items-center justify-between gap-3">
               <button
                 @click="$refs.fileInput.click()"
+                :disabled="isSecondaryControlsBlocked"
                 :class="[
                   'w-9 h-9 rounded-xl flex items-center justify-center border transition-all flex-shrink-0',
                   isEmptyFile
                     ? 'border-red-500 text-red-400 bg-red-500/10'
-                    : 'border-[#363a46] bg-[#2a2d36] text-[#b7bccb] hover:border-[#6c7dff] hover:text-[#dbe1ff]'
+                    : 'border-[#363a46] bg-[#2a2d36] text-[#b7bccb] hover:border-[#6c7dff] hover:text-[#dbe1ff] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#363a46] disabled:hover:text-[#b7bccb]'
                 ]"
                 title="Загрузить .log файл"
               >
@@ -158,9 +165,9 @@
                 </div>
 
                 <button
-                  class="w-9 h-9 rounded-xl bg-[#2a2d36] border border-[#363a46] text-[#bcc1cf] hover:text-white hover:border-[#5566ff] transition-colors"
+                  :disabled="isSecondaryControlsBlocked || !isVoiceInputEnabled"
+                  class="w-9 h-9 rounded-xl bg-[#2a2d36] border border-[#363a46] text-[#bcc1cf] hover:text-white hover:border-[#5566ff] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#bcc1cf] disabled:hover:border-[#363a46] transition-colors"
                   type="button"
-                  disabled
                   title="Голосовой ввод скоро"
                 >
                   <img src="/micro_icon.svg" alt="voice" class="w-4 h-4 mx-auto" />
@@ -192,18 +199,21 @@
         <div v-if="messages.length === 0" class="flex flex-wrap justify-center gap-3 mt-5">
           <button
             @click="selectQuickQuestion('Какие рекомендации для предотвращения атак?')"
+            :disabled="isQuickQuestionBlocked"
             class="quick-pill"
           >
             Рекомендации
           </button>
           <button
             @click="selectQuickQuestion('Какие тренды в безопасности?')"
+            :disabled="isQuickQuestionBlocked"
             class="quick-pill"
           >
             Тренды
           </button>
           <button
             @click="selectQuickQuestion('Покажи релевантные техники MITRE ATT&CK для этих инцидентов')"
+            :disabled="isQuickQuestionBlocked"
             class="quick-pill"
           >
             MITRE
@@ -443,6 +453,20 @@ const canUseSendControl = computed(() => {
   return canSendMessage.value
 })
 
+const isSecondaryControlsBlocked = computed(() => {
+  return isLoading.value || isRateLimited.value || isLogAnalysisInProgress.value
+})
+
+const isVoiceInputEnabled = false
+
+const isQuickQuestionBlocked = computed(() => {
+  return isLoading.value || isRateLimited.value || isLogAnalysisInProgress.value
+})
+
+const isInputBlocked = computed(() => {
+  return isLoading.value || isRateLimited.value
+})
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatContainer.value) {
@@ -674,6 +698,8 @@ const handleSendControlClick = () => {
 }
 
 const selectQuickQuestion = (question) => {
+  if (isQuickQuestionBlocked.value) return
+
   inputMessage.value = question
   sendMessage()
 }
@@ -859,6 +885,14 @@ const confirmNewChat = async () => {
   border-color: rgba(103, 124, 255, 0.8);
   color: #f3f5ff;
   transform: translateY(-1px);
+}
+
+.quick-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #3c3c3c;
+  color: #8f94a3;
+  transform: none;
 }
 
 /* Стили для markdown контента */
