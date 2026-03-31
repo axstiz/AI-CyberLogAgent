@@ -166,7 +166,7 @@ def register():
         Requires a valid database connection and PASSWORD_SALT environment variable.
 
     """
-    print("\n🔐 Регистрация нового пользователя")
+    print("\nРегистрация нового пользователя")
     print("(Для отмены нажмите Enter без ввода)\n")
 
     # Валидация логина и проверка существования пользователя
@@ -180,7 +180,7 @@ def register():
         if not is_valid:
             print(f"❌ {error_message}")
             print(
-                "💡 Требования: 6-16 символов, только английские буквы и цифры, не начинается с цифры\n"
+                "Требования: 6-16 символов, только английские буквы и цифры, не начинается с цифры\n"
             )
             continue
 
@@ -215,7 +215,7 @@ def register():
         if not is_valid:
             print(f"❌ {error_message}")
             print(
-                "💡 Требования: 8-32 символа, минимум 1 буква, 1 цифра и 1 специальный символ\n"
+                "Требования: 8-32 символа, минимум 1 буква, 1 цифра и 1 специальный символ\n"
             )
             continue
         break
@@ -224,7 +224,7 @@ def register():
     password_salt = os.getenv("PASSWORD_SALT")
     if not password_salt:
         print("❌ Ошибка: PASSWORD_SALT не задана в переменных окружения")
-        print("💡 Добавьте PASSWORD_SALT в файл .env")
+        print("Добавьте PASSWORD_SALT в файл .env")
         return
 
     try:

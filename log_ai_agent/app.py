@@ -1043,7 +1043,7 @@ AVAILABLE_COMMANDS = {
 def show_help():
     """Показать справку по использованию консоли."""
     print("\n" + "=" * 60)
-    print("  AI CyberLog Agent - CLI Команды")
+    print("  Wavescan - CLI Команды")
     print("=" * 60)
     print("\nДоступные команды:")
     print("-" * 60)
@@ -1069,7 +1069,7 @@ def execute_command(command: str):
         commands.register()
     else:
         print(f"❌ Ошибка: неизвестная команда '{command}'")
-        print("💡 Введите 'help' чтобы увидеть доступные команды")
+        print("Введите 'help' чтобы увидеть доступные команды")
 
     return True
 
@@ -1100,7 +1100,7 @@ def run_interactive():
 def run_cli():
     """Запустить CLI команды"""
     if len(sys.argv) <= 1:
-        print("\nОшибка: команда не указана")
+        print("\n❌ Ошибка: команда не указана")
         show_help()
         sys.exit(1)
 
