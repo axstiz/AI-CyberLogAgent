@@ -212,6 +212,7 @@ AI-CyberLogAgent/
 ### Таблица UserLogs
 
 - user_log_id: integer (Уникальный идентификатор лога пользователя, автоинкремент)
+- user_id: integer (Внешний ключ на Users, пользователь, выполнивший действие)
 - action_type_id: integer (Внешний ключ на ActionTypes, тип действия)
 - description: text (Описание действия агента)
 - date: timestamp with time zone (Дата и время выполнения действия)
