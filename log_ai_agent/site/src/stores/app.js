@@ -103,12 +103,26 @@ export const useAppStore = defineStore('app', () => {
   /**
    * Выход пользователя
    */
-  const logout = () => {
-    isAuthenticated.value = false
-    currentUser.value = null
-    token.value = null
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('current_user')
+  const logout = async () => {
+    try {
+      await auth.logout(currentUser.value?.id)
+    } catch (error) {
+      console.error('Logout API error:', error)
+    } finally {
+      isAuthenticated.value = false
+      currentUser.value = null
+      token.value = null
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('current_user')
+    }
+  }
+
+  const normalizeNotificationType = (type = 'info') => {
+    const aliasMap = {
+      error: 'danger',
+      warn: 'warning',
+    }
+    return aliasMap[type] || type
   }
 
   /**
@@ -116,7 +130,8 @@ export const useAppStore = defineStore('app', () => {
    */
   const showNotificationNow = (message, type = 'info', duration = 5000, playSound = false) => {
     const id = Math.random()
-    const notification = { id, message, type }
+    const normalizedType = normalizeNotificationType(type)
+    const notification = { id, message, type: normalizedType, duration }
     
     // Ограничение на 5 уведомлений - удаляем старые
     if (notifications.value.length >= 5) {

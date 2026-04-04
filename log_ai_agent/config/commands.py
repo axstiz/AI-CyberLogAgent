@@ -154,26 +154,6 @@ def verify_user_credentials(login: str, password: str) -> tuple[bool, dict | Non
         return False, None
 
 
-def collect_logs():
-    """Collect analyse_logs from the specified directory."""
-    print("Logs collected\n")  # ЗАГЛУШКА >>>
-
-
-def hide_logs():
-    """Hide the analyse_logs from view."""
-    print("Logs hidden\n")
-
-
-def show_logs():
-    """Display the analyse_logs."""
-    print("Logs shown\n")  # ЗАГЛУШКА >>>
-
-
-def get_history():
-    """Retrieve the incident history."""
-    print("Incidents history shown\n")  # ЗАГЛУШКА >>>
-
-
 def register():
     """Register a new user.
 
@@ -187,7 +167,7 @@ def register():
         Requires a valid database connection and PASSWORD_SALT environment variable.
 
     """
-    print("\n🔐 Регистрация нового пользователя")
+    print("\nРегистрация нового пользователя")
     print("(Для отмены нажмите Enter без ввода)\n")
 
     # Валидация логина и проверка существования пользователя
@@ -201,7 +181,7 @@ def register():
         if not is_valid:
             print(f"❌ {error_message}")
             print(
-                "💡 Требования: 6-16 символов, только английские буквы и цифры, не начинается с цифры\n"
+                "Требования: 6-16 символов, только английские буквы и цифры, не начинается с цифры\n"
             )
             continue
 
@@ -236,7 +216,7 @@ def register():
         if not is_valid:
             print(f"❌ {error_message}")
             print(
-                "💡 Требования: 8-32 символа, минимум 1 буква, 1 цифра и 1 специальный символ\n"
+                "Требования: 8-32 символа, минимум 1 буква, 1 цифра и 1 специальный символ\n"
             )
             continue
         break
@@ -245,7 +225,7 @@ def register():
     password_salt = os.getenv("PASSWORD_SALT")
     if not password_salt:
         print("❌ Ошибка: PASSWORD_SALT не задана в переменных окружения")
-        print("💡 Добавьте PASSWORD_SALT в файл .env")
+        print("Добавьте PASSWORD_SALT в файл .env")
         return
 
     try:

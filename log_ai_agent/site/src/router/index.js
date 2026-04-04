@@ -1,10 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { checkBackendReady } from '@/services/backendReadiness'
 
 /**
  * Маршруты приложения
  */
 const routes = [
+  {
+    path: '/assistant-loading',
+    name: 'AssistantLoading',
+    component: () => import('@/pages/AssistantLoadingPage.vue'),
+    meta: { requiresAuth: false },
+  },
   {
     path: '/login',
     name: 'Login',
@@ -47,8 +54,22 @@ const router = createRouter({
 /**
  * Навигационный guard для проверки аутентификации
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const appStore = useAppStore()
+  const backendReady = await checkBackendReady()
+
+  if (!backendReady && to.name !== 'AssistantLoading') {
+    next({
+      name: 'AssistantLoading',
+      query: { redirect: to.fullPath },
+    })
+    return
+  }
+
+  if (backendReady && to.name === 'AssistantLoading') {
+    next(appStore.isAuthenticated ? '/' : '/login')
+    return
+  }
 
   if (to.meta.requiresAuth && !appStore.isAuthenticated) {
     next('/login')
