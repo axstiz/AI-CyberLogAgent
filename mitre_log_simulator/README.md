@@ -34,6 +34,7 @@
 | ATTACK_INTERVAL_MAX | 120 | Верхняя граница интервала random |
 | LOG_RATE | 200 | Базовая интенсивность логов, записей/сек (фактически ±10%) |
 | FLOG_RPS | 5 | Вклад фонового flog в общий поток (для точного rate-бюджета) |
+| MAX_LOG_LINES | 0 | Остановить симулятор после N строк логов (0 = без лимита) |
 | RANDOM_SEED | 42 | Seed для детерминированной последовательности |
 | HOSTNAME_OVERRIDE | target-node-01 | Имя узла в логах |
 
@@ -77,6 +78,9 @@ Windows PowerShell:
 # random режим: интервал 30-45 сек, seed=123, без пересборки
 ./run.sh --random --min 30 --max 45 --seed 123 --no-build
 
+# короткий smoke-тест: 250 логов и автоматическое завершение
+./run.sh fixed T1059 5 --max-logs 250
+
 # посмотреть логи
 ./run.sh logs
 
@@ -93,6 +97,9 @@ Windows PowerShell:
 
 # random режим: интервал 30-45 сек, seed=123, без пересборки
 .\run.ps1 random -MinInterval 30 -MaxInterval 45 -Seed 123 -NoBuild
+
+# короткий smoke-тест: 250 логов и автоматическое завершение
+.\run.ps1 fixed T1059 5 -MaxLogs 250
 
 # посмотреть логи
 .\run.ps1 logs

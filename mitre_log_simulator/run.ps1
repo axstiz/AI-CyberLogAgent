@@ -18,7 +18,9 @@ param(
 
     [int]$Rate = 200,
 
-    [string]$Host = "target-node-01",
+    [int]$MaxLogs = 0,
+
+    [string]$HostName = "target-node-01",
 
     [switch]$NoBuild,
 
@@ -31,6 +33,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-Location -Path $PSScriptRoot
 
 function Show-Usage {
     @"
@@ -123,7 +126,9 @@ $env:ATTACK_INTERVAL_MIN = [string]$MinInterval
 $env:ATTACK_INTERVAL_MAX = [string]$MaxInterval
 $env:RANDOM_SEED = [string]$Seed
 $env:LOG_RATE = [string]$Rate
-$env:HOSTNAME_OVERRIDE = $Host
+$env:MAX_LOG_LINES = [string]$MaxLogs
+$env:RESTART_POLICY = if ($MaxLogs -gt 0) { "no" } else { "unless-stopped" }
+$env:HOSTNAME_OVERRIDE = $HostName
 
 if ($useDockerComposeV2) {
     if ($Down) {

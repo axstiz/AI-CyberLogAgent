@@ -4,6 +4,7 @@ set -Eeuo pipefail
 ORCHESTRATOR_PID_FILE="/tmp/orchestrator.pid"
 LAST_STDOUT_TS_FILE="/tmp/last_stdout_ts"
 UNHEALTHY_FLAG_FILE="/tmp/unhealthy"
+STOP_REQUEST_FILE="/tmp/stop_requested"
 SIM_SYSLOG_FILE="/tmp/syslog_sim.log"
 GOLDEN_LOG_FILE="/var/log/golden/attack_timeline.log"
 
@@ -16,6 +17,9 @@ LOG_RATE="${LOG_RATE:-200}"
 RANDOM_SEED="${RANDOM_SEED:-42}"
 HOSTNAME_OVERRIDE="${HOSTNAME_OVERRIDE:-target-node-01}"
 FLOG_RPS="${FLOG_RPS:-5}"
+MAX_LOG_LINES="${MAX_LOG_LINES:-0}"
+
+LOG_LINES_EMITTED=0
 
 # Allowed MITRE techniques for simulation only.
 TECHNIQUES=(
@@ -44,8 +48,22 @@ epoch_now() {
 
 emit_stdout() {
   local line="$1"
+
+  # Stop emitting immediately once stop was requested.
+  if [[ -f "${STOP_REQUEST_FILE}" ]]; then
+    return 0
+  fi
+
   echo "${line}"
   epoch_now > "${LAST_STDOUT_TS_FILE}"
+
+  LOG_LINES_EMITTED=$((LOG_LINES_EMITTED + 1))
+  if (( MAX_LOG_LINES > 0 && LOG_LINES_EMITTED >= MAX_LOG_LINES )); then
+    # Create stop marker atomically and announce the limit only once.
+    if ( set -o noclobber; echo "1" > "${STOP_REQUEST_FILE}" ) 2>/dev/null; then
+      echo "$(iso_now) app {\"level\":\"INFO\",\"msg\":\"Max log limit reached\",\"max_logs\":${MAX_LOG_LINES}}"
+    fi
+  fi
 }
 
 emit_syslog_like() {
@@ -80,6 +98,11 @@ validate_env() {
       emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"FIXED_TECHNIQUE is not supported\",\"value\":\"${FIXED_TECHNIQUE}\"}"
       exit 1
     fi
+  fi
+
+  if ! [[ "${MAX_LOG_LINES}" =~ ^[0-9]+$ ]]; then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MAX_LOG_LINES must be integer >= 0\",\"value\":\"${MAX_LOG_LINES}\"}"
+    exit 1
   fi
 }
 
@@ -377,6 +400,10 @@ on_shutdown() {
 
 main_loop() {
   while true; do
+    if [[ -f "${STOP_REQUEST_FILE}" ]]; then
+      break
+    fi
+
     run_noise_batch
 
     local sleep_for
@@ -385,10 +412,17 @@ main_loop() {
     # Keep noise running while waiting for the next attack.
     local passed=0
     while (( passed < sleep_for )); do
+      if [[ -f "${STOP_REQUEST_FILE}" ]]; then
+        break 2
+      fi
       sleep 1
       passed=$((passed + 1))
       run_noise_batch
     done
+
+    if [[ -f "${STOP_REQUEST_FILE}" ]]; then
+      break
+    fi
 
     if [[ "${ATTACK_MODE}" == "fixed" ]]; then
       run_technique "${FIXED_TECHNIQUE}"
@@ -404,6 +438,7 @@ bootstrap() {
   : > "${SIM_SYSLOG_FILE}"
   epoch_now > "${LAST_STDOUT_TS_FILE}"
   rm -f "${UNHEALTHY_FLAG_FILE}"
+  rm -f "${STOP_REQUEST_FILE}"
 
   echo "$$" > "${ORCHESTRATOR_PID_FILE}"
   validate_env
@@ -414,6 +449,8 @@ bootstrap() {
   main_loop &
   main_pid="$!"
   wait "${main_pid}"
+
+  on_shutdown
 }
 
 trap on_shutdown SIGTERM SIGINT

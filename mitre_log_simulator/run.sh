@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -23,6 +26,7 @@ Options:
   --max <sec>                   Max random interval (default: 120)
   --seed <n>                    Random seed (default: 42)
   --rate <n>                    Log rate per second (default: 200)
+  --max-logs <n>                Stop after N emitted log lines (0 = unlimited)
   --host <name>                 Hostname in logs (default: target-node-01)
   --no-build                    Skip image rebuild
   --logs                        Follow logs only
@@ -45,7 +49,9 @@ ATTACK_INTERVAL_MIN="60"
 ATTACK_INTERVAL_MAX="120"
 RANDOM_SEED="42"
 LOG_RATE="200"
+MAX_LOG_LINES="0"
 HOSTNAME_OVERRIDE="target-node-01"
+RESTART_POLICY="unless-stopped"
 ACTION="up"
 NO_BUILD="0"
 
@@ -130,6 +136,11 @@ while [[ $# -gt 0 ]]; do
       [[ -n "${LOG_RATE}" ]] || { echo "Error: --rate requires value"; exit 1; }
       shift 2
       ;;
+    --max-logs)
+      MAX_LOG_LINES="${2:-}"
+      [[ -n "${MAX_LOG_LINES}" ]] || { echo "Error: --max-logs requires value"; exit 1; }
+      shift 2
+      ;;
     --host)
       HOSTNAME_OVERRIDE="${2:-}"
       [[ -n "${HOSTNAME_OVERRIDE}" ]] || { echo "Error: --host requires value"; exit 1; }
@@ -199,5 +210,7 @@ ATTACK_INTERVAL_MIN="${ATTACK_INTERVAL_MIN}" \
 ATTACK_INTERVAL_MAX="${ATTACK_INTERVAL_MAX}" \
 RANDOM_SEED="${RANDOM_SEED}" \
 LOG_RATE="${LOG_RATE}" \
+MAX_LOG_LINES="${MAX_LOG_LINES}" \
+RESTART_POLICY="$([ "${MAX_LOG_LINES}" -gt 0 ] && echo "no" || echo "${RESTART_POLICY}")" \
 HOSTNAME_OVERRIDE="${HOSTNAME_OVERRIDE}" \
 "${cmd[@]}"
