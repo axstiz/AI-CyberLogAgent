@@ -52,7 +52,7 @@
 
 ## Быстрый запуск
 
-### 1) Одна команда
+### 1) Одна команда (рекомендуется)
 
 ```bash
 chmod +x run.sh orchestrator.sh
@@ -65,11 +65,53 @@ Windows PowerShell:
 .\run.ps1
 ```
 
+Примеры удобного запуска:
+
+```bash
+# старт (случайные атаки)
+./run.sh start
+
+# fixed режим: одна техника каждые 60 сек
+./run.sh fixed T1059 60
+
+# random режим: интервал 30-45 сек, seed=123, без пересборки
+./run.sh --random --min 30 --max 45 --seed 123 --no-build
+
+# посмотреть логи
+./run.sh logs
+
+# остановить контейнер
+./run.sh stop
+```
+
+```powershell
+# старт (случайные атаки)
+.\run.ps1 start
+
+# fixed режим: одна техника каждые 60 сек
+.\run.ps1 fixed T1059 60
+
+# random режим: интервал 30-45 сек, seed=123, без пересборки
+.\run.ps1 random -MinInterval 30 -MaxInterval 45 -Seed 123 -NoBuild
+
+# посмотреть логи
+.\run.ps1 logs
+
+# остановить контейнер
+.\run.ps1 stop
+```
+
 ### 2) Случайные атаки (docker run)
 
 ```bash
 docker build -t my_image .
 docker run --rm -v ./golden_logs:/var/log/golden my_image
+```
+
+Для авто-перезапуска при падении лучше использовать:
+
+```bash
+docker run --restart unless-stopped -v ./golden_logs:/var/log/golden my_image
 ```
 
 ### 3) Фиксированная техника T1059 каждые 60 секунд
