@@ -292,7 +292,7 @@ kafka_log_consumer = KafkaLogBatchConsumer(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle events для приложения"""
-    logger.info("🚀 Starting AI CyberLog Agent Backend...")
+    logger.info("🚀 Starting Wavescan Backend...")
     logger.info(f"📊 Database URL: {DATABASE_URL}")
     logger.info(f"📦 Pipeline collected logs file: {PIPELINE_COLLECTED_LOGS_FILE}")
 
@@ -313,14 +313,14 @@ async def lifespan(app: FastAPI):
     if KAFKA_ENABLED:
         await kafka_log_consumer.stop()
 
-    logger.info("🛑 Shutting down AI CyberLog Agent Backend...")
+    logger.info("🛑 Shutting down Wavescan Backend...")
     # Close AI Agent v2 resources
     await close_pipeline()
 
 
 # Создание FastAPI приложения
 app = FastAPI(
-    title="AI CyberLog Agent API",
+    title="Wavescan API",
     description="Backend API for AI-powered log analysis and incident monitoring",
     version="1.0.0",
     lifespan=lifespan,
@@ -370,7 +370,7 @@ class ChatMessageResponse(BaseModel):
 @app.get("/")
 async def root():
     """Главная страница API"""
-    return {"message": "AI CyberLog Agent API", "status": "running", "version": "1.0.0"}
+    return {"message": "Wavescan API", "status": "running", "version": "1.0.0"}
 
 
 @app.post("/api/auth/login", response_model=LoginResponse)
