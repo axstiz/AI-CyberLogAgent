@@ -138,10 +138,10 @@ volumes:
     name: cyberlog_kafka_data
   external_logs:
     driver: local
-    name: cyberlog_external_logs
+    name: ${PIPELINE_EXTERNAL_LOGS_VOLUME_NAME:-cyberlog_external_logs}
   processed_logs:
     driver: local
-    name: cyberlog_processed_logs
+    name: ${PIPELINE_PROCESSED_LOGS_VOLUME_NAME:-cyberlog_processed_logs}
 
 networks:
   cyberlog-network:
