@@ -17,7 +17,10 @@
       >
         <div
           ref="chatContainer"
-          class="chat-scroll-container h-full w-full min-h-0 overflow-y-auto pt-8 pr-3"
+          :class="[
+            'chat-scroll-container h-full w-full min-h-0 overflow-y-auto pt-8 pr-3',
+            messages.length ? 'chat-scroll-fade-bottom' : ''
+          ]"
           :style="{ paddingBottom: `${topAlignSpacerHeight}px` }"
           @scroll="handleChatScroll"
         >
@@ -91,7 +94,7 @@
 
       <div
         :class="[
-          'mx-auto w-full max-w-3xl pb-6 shrink-0 transform',
+          'mx-auto w-full max-w-3xl pb-6 shrink-0 transform mt-2',
           messages.length ? 'translate-y-0 pt-2' : '-translate-y-[24vh]'
         ]"
       >
@@ -1002,6 +1005,25 @@ const confirmNewChat = async () => {
   width: 0;
   height: 0;
   display: none;
+}
+
+.chat-scroll-fade-bottom {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 calc(100% - 104px),
+    rgba(0, 0, 0, 0.82) calc(100% - 76px),
+    rgba(0, 0, 0, 0.38) calc(100% - 40px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 calc(100% - 104px),
+    rgba(0, 0, 0, 0.82) calc(100% - 76px),
+    rgba(0, 0, 0, 0.38) calc(100% - 40px),
+    transparent 100%
+  );
 }
 
 .chat-scrollbar-track {
