@@ -103,6 +103,7 @@ class AnalysisState(TypedDict, total=False):
     total_time_sec: float
     log_size: int
     processing_time_ms: float
+    prefilter_stats: dict
 
 
 class PipelineResult(TypedDict, total=False):
