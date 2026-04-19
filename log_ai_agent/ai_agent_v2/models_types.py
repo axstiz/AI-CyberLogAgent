@@ -83,12 +83,12 @@ class AnalysisState(TypedDict, total=False):
     agent2_report: str
 
     # ===== YARA SCAN OUTPUT =====
-    yara_matches: list[dict]
-    yara_rules_matched:
+    yara_matches: Annotated[List[str], operator.add]
+    yara_rules_matched: Annotated[List[str], operator.add]
     yara_context: str
 
     # ===== SIGMA SCAN OUTPUT =====
-    sigma_matches: list[dict]
+    sigma_matches: Annotated[List[str], operator.add]
     sigma_rules_matched: Annotated[List[str], operator.add]
     sigma_context: str
 
