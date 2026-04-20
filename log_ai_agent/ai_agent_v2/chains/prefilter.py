@@ -5,7 +5,6 @@ before expensive LLM/YARA/Sigma processing while preserving security-relevant lo
 """
 
 import re
-from typing import Tuple
 
 from ..parsers.apache_parser import ParsedLog
 

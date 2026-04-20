@@ -1,7 +1,7 @@
 """Type definitions for LangGraph compatibility."""
 
 import operator
-from typing import Annotated, List, TypedDict
+from typing import Annotated, TypedDict
 
 from .parsers.apache_parser import ParsedLog
 
