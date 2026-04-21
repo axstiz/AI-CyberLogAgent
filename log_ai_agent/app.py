@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -5,7 +6,7 @@ import shutil
 import sys
 import urllib.error
 import urllib.request
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Request,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -70,6 +72,11 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
 CLI_TZ_OFFSET_HOURS = int(os.getenv("CLI_TZ_OFFSET_HOURS", "5"))
 CLI_TZ = timezone(timedelta(hours=CLI_TZ_OFFSET_HOURS))
+APP_DIR = Path(__file__).parent.resolve()
+AI_AGENT_RULES_DIR = APP_DIR / "ai_agent_v2" / "rules"
+SIGMA_RULES_DIR = AI_AGENT_RULES_DIR / "sigma"
+YARA_RULES_DIR = AI_AGENT_RULES_DIR / "yara"
+YARA_RULE_FILE = YARA_RULES_DIR / "cyber_security_rules.yar"
 
 AGENT_ACTION_RECEIVE_LOGS = 1
 AGENT_ACTION_ANALYZE_LOGS = 2
@@ -85,6 +92,39 @@ USER_ACTION_SEND_MESSAGE = 10
 
 MIN_LOG_LINES = 50
 MAX_LOG_LINES = 500
+
+
+def _resolve_analysis_marker_file(processed_dir: Path) -> Path:
+    """Resolve path to persisted analysis marker shared between CLI and backend."""
+    return Path(
+        os.getenv(
+            "PIPELINE_ANALYSIS_MARKER_FILE",
+            str(processed_dir / ".analysis_progress.marker"),
+        )
+    )
+
+
+def _read_analysis_marker(marker_file: Path) -> int | None:
+    """Read persisted marker line from analysis marker file."""
+    if not marker_file.exists() or not marker_file.is_file():
+        return None
+
+    try:
+        raw_value = marker_file.read_text(encoding="utf-8").strip()
+        marker = int(raw_value)
+        return marker if marker >= 0 else 0
+    except Exception:
+        return None
+
+
+def _write_analysis_marker(marker_file: Path, marker_line: int) -> bool:
+    """Persist marker line to analysis marker file."""
+    try:
+        marker_file.parent.mkdir(parents=True, exist_ok=True)
+        marker_file.write_text(f"{max(0, marker_line)}\n", encoding="utf-8")
+        return True
+    except Exception:
+        return False
 
 
 class RealtimeConnectionHub:
@@ -122,30 +162,79 @@ runtime_analysis_state: dict[str, object] = {
     "current_batch_started_at": None,
     "current_source": None,
     "current_records": 0,
+    "current_batch_end_record_seq": None,
     "last_batch_completed_at": None,
+    "last_completed_end_record_seq": None,
     "last_events_found": None,
     "last_error": None,
 }
+log_upload_cancel_events: dict[int, asyncio.Event] = {}
+log_upload_cancel_lock = asyncio.Lock()
 
 
-def _mark_runtime_processing(source_label: str, records_count: int) -> None:
+def _mark_runtime_processing(
+    source_label: str,
+    records_count: int,
+    batch_end_record_seq: int | None,
+) -> None:
     """Track current Kafka batch processing stage for status endpoint."""
     runtime_analysis_state["processing"] = True
     runtime_analysis_state["current_batch_started_at"] = datetime.now(UTC).isoformat()
     runtime_analysis_state["current_source"] = source_label
     runtime_analysis_state["current_records"] = records_count
+    runtime_analysis_state["current_batch_end_record_seq"] = batch_end_record_seq
     runtime_analysis_state["last_error"] = None
 
 
 def _mark_runtime_idle(
     events_found: int | None = None,
     error_text: str | None = None,
+    completed_end_record_seq: int | None = None,
 ) -> None:
     """Mark Kafka batch processing completion for status endpoint."""
     runtime_analysis_state["processing"] = False
     runtime_analysis_state["last_batch_completed_at"] = datetime.now(UTC).isoformat()
     runtime_analysis_state["last_events_found"] = events_found
     runtime_analysis_state["last_error"] = error_text
+    runtime_analysis_state["current_batch_end_record_seq"] = None
+
+    if error_text is None and completed_end_record_seq is not None:
+        previous = runtime_analysis_state.get("last_completed_end_record_seq")
+        previous_value = previous if isinstance(previous, int) and previous >= 0 else 0
+        completed_marker = max(
+            previous_value,
+            completed_end_record_seq,
+        )
+        runtime_analysis_state["last_completed_end_record_seq"] = completed_marker
+        processed_dir = Path(
+            os.getenv("PIPELINE_PROCESSED_LOGS_DIR", "/app/shared/processed")
+        )
+        marker_file = _resolve_analysis_marker_file(processed_dir)
+        _write_analysis_marker(marker_file, completed_marker)
+
+
+async def _start_log_upload_cancellation_scope(user_id: int) -> asyncio.Event:
+    """Create/reset cancellation flag for an active log upload."""
+    async with log_upload_cancel_lock:
+        cancel_event = asyncio.Event()
+        log_upload_cancel_events[user_id] = cancel_event
+        return cancel_event
+
+
+async def _finish_log_upload_cancellation_scope(
+    user_id: int, cancel_event: asyncio.Event
+) -> None:
+    """Remove cancellation flag only for the same active upload scope."""
+    async with log_upload_cancel_lock:
+        current_event = log_upload_cancel_events.get(user_id)
+        if current_event is cancel_event:
+            del log_upload_cancel_events[user_id]
+
+
+def _raise_if_log_upload_canceled(cancel_event: asyncio.Event) -> None:
+    """Abort request flow if current upload has been cancelled by user."""
+    if cancel_event.is_set():
+        raise HTTPException(status_code=499, detail="Анализ лога отменен пользователем")
 
 
 def _map_severity_for_frontend(severity_level_id: int | None) -> str:
@@ -202,6 +291,39 @@ async def _broadcast_incident_event(
         )
     except Exception as error:
         logger.warning("Failed to broadcast incident event: %s", error)
+
+
+async def _broadcast_report_created_event(
+    report_id: int,
+    source: str,
+    severity_level_id: int | None,
+) -> None:
+    """Broadcast report creation event so report views can refresh in realtime."""
+    try:
+        await realtime_hub.broadcast(
+            {
+                "type": "report_created",
+                "report_id": report_id,
+                "source": source,
+                "severity": _map_severity_for_frontend(severity_level_id),
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+        )
+    except Exception as error:
+        logger.warning("Failed to broadcast report_created event: %s", error)
+
+
+def _schedule_background_task(coro, task_name: str) -> None:
+    """Run a coroutine in background and log failures without blocking request flow."""
+    task = asyncio.create_task(coro)
+
+    def _handle_task_result(done_task: asyncio.Task) -> None:
+        try:
+            done_task.result()
+        except Exception as error:
+            logger.warning("Background task %s failed: %s", task_name, error)
+
+    task.add_done_callback(_handle_task_result)
 
 
 async def _insert_agent_log(
@@ -300,11 +422,13 @@ async def _process_kafka_log_batch(payload: dict) -> None:
         if isinstance(source_files, list) and source_files
         else source_file
     )
-    _mark_runtime_processing(source_label, len(messages))
+    batch_end_record_seq = _extract_marker_from_payload(payload)
+    _mark_runtime_processing(source_label, len(messages), batch_end_record_seq)
 
     log_content = "\n".join(messages)
     events_found: int | None = None
     runtime_error: str | None = None
+    analysis_completed = False
 
     try:
         analysis_result = await analyze_log_v2(log_content)
@@ -329,13 +453,14 @@ async def _process_kafka_log_batch(payload: dict) -> None:
                 source_label,
                 len(messages),
             )
+            analysis_completed = True
             return
 
+        report_datetime = datetime.now(CLI_TZ).strftime("%d.%m.%Y %H:%M")
         report_description = (
-            "AI pipeline: Agent1 -> RAG -> Agent2\n"
-            f"Источник: {source_label}\n"
+            f"Дата и время: {report_datetime}\n"
             f"Размер батча: {batch.get('batch_size', len(messages))}\n"
-            f"Событий выделено Agent1: {events_found}\n"
+            f"Событий найдено: {events_found}\n"
             f"\n{analysis_result['description']}"
         )
 
@@ -372,7 +497,7 @@ async def _process_kafka_log_batch(payload: dict) -> None:
             )
             log_id = log_row["log_id"]
 
-            await conn.execute(
+            report_row = await conn.fetchrow(
                 """
                 INSERT INTO public."Reports" (
                     log_id,
@@ -382,25 +507,28 @@ async def _process_kafka_log_batch(payload: dict) -> None:
                     created_at
                 )
                 VALUES ($1, $2, $3, $4, NOW())
+                RETURNING report_id
                 """,
                 log_id,
                 analysis_result["severity_level_id"],
                 analysis_result["threat_type_id"],
                 report_description,
             )
+            report_id = report_row["report_id"]
 
             await _try_insert_agent_log(
                 conn,
                 AGENT_ACTION_SAVE_REPORT,
-                f"Сохранение отчета по Kafka batch: log_id={log_id}",
+                f"Сохранение отчета по Kafka batch: log_id={log_id}, report_id={report_id}",
             )
 
             chat_message = f"# Автоотчет по входящим логам\n\n{report_description}\n\n"
-            inserted_messages = await conn.execute(
+            inserted_messages = await conn.fetch(
                 """
                 INSERT INTO public."Messages" (user_id, role, content, created_at)
                 SELECT user_id, 'agent', $1, NOW()
                 FROM public."Users"
+                RETURNING user_id
                 """,
                 chat_message,
             )
@@ -412,13 +540,24 @@ async def _process_kafka_log_batch(payload: dict) -> None:
             )
 
             logger.info(
-                "Kafka batch analyzed and saved via v2: source=%s, records=%s, events_found=%s, log_id=%s",
+                "Kafka batch analyzed and saved via v2: source=%s, records=%s, events_found=%s, log_id=%s, report_id=%s",
                 source_label,
                 len(messages),
                 events_found,
                 log_id,
+                report_id,
             )
-            logger.info("Kafka report auto-posted to chat: %s", inserted_messages)
+            logger.info(
+                "Kafka report auto-posted to chat for users: %s",
+                len(inserted_messages),
+            )
+
+            for row in inserted_messages:
+                await _broadcast_chat_response_event(
+                    user_id=row["user_id"],
+                    response_text=chat_message,
+                    mode="auto_report",
+                )
 
             await _broadcast_incident_event(
                 title=f"Инцидент из Kafka потока ({source_label})",
@@ -426,13 +565,25 @@ async def _process_kafka_log_batch(payload: dict) -> None:
                 severity_level_id=analysis_result.get("severity_level_id"),
                 source="Kafka Pipeline",
             )
+            await _broadcast_report_created_event(
+                report_id=report_id,
+                source="Kafka Pipeline",
+                severity_level_id=analysis_result.get("severity_level_id"),
+            )
+            analysis_completed = True
         finally:
             await conn.close()
     except Exception as error:
         runtime_error = str(error)
         raise
     finally:
-        _mark_runtime_idle(events_found=events_found, error_text=runtime_error)
+        _mark_runtime_idle(
+            events_found=events_found,
+            error_text=runtime_error,
+            completed_end_record_seq=(
+                batch_end_record_seq if analysis_completed else None
+            ),
+        )
 
 
 kafka_log_consumer = KafkaLogBatchConsumer(
@@ -516,7 +667,7 @@ class LoginResponse(BaseModel):
 
 class ChatMessageRequest(BaseModel):
     user_id: int
-    role: str  # 'user' или 'assistant'
+    role: str  # 'user', 'agent' или 'notice'
     content: str
 
 
@@ -526,6 +677,14 @@ class ChatMessageResponse(BaseModel):
     role: str
     content: str
     created_at: str
+
+
+class RuleContentUpdateRequest(BaseModel):
+    content: str
+
+
+class SigmaFileCreateRequest(BaseModel):
+    filename: str
 
 
 @app.get("/")
@@ -679,6 +838,176 @@ async def get_system_status():
         "consumer_running": bool(getattr(kafka_log_consumer, "_running", False)),
         "analysis": runtime_analysis_state,
     }
+
+
+def _resolve_sigma_file_path(filename: str) -> Path:
+    """Validate sigma filename and return normalized file path."""
+    if not filename:
+        raise HTTPException(status_code=400, detail="Имя файла обязательно")
+
+    normalized_name = Path(filename).name
+    if normalized_name != filename:
+        raise HTTPException(status_code=400, detail="Некорректное имя файла")
+
+    suffix = Path(normalized_name).suffix.lower()
+    if suffix not in {".yml", ".yaml"}:
+        raise HTTPException(status_code=400, detail="Допустимы только .yml или .yaml")
+
+    if any(char in normalized_name for char in ("\\", "/", ":")):
+        raise HTTPException(status_code=400, detail="Некорректное имя файла")
+
+    return (SIGMA_RULES_DIR / normalized_name).resolve()
+
+
+async def _reload_detection_pipeline() -> None:
+    """Reload AI pipeline to pick up updated YARA/Sigma rules."""
+    await close_pipeline()
+    await warmup_pipeline()
+
+
+@app.get("/api/config/sigma/files")
+async def list_sigma_rule_files():
+    """Get list of Sigma rule files from rules directory."""
+    try:
+        SIGMA_RULES_DIR.mkdir(parents=True, exist_ok=True)
+        files = sorted(
+            file.name
+            for file in SIGMA_RULES_DIR.iterdir()
+            if file.is_file() and file.suffix.lower() in {".yml", ".yaml"}
+        )
+        return {"files": files}
+    except Exception as e:
+        logger.error(f"Error listing Sigma files: {e}")
+        raise HTTPException(
+            status_code=500, detail="Ошибка чтения каталога Sigma правил"
+        )
+
+
+@app.post("/api/config/sigma/files")
+async def create_sigma_rule_file(request: SigmaFileCreateRequest):
+    """Create empty Sigma rule file."""
+    try:
+        SIGMA_RULES_DIR.mkdir(parents=True, exist_ok=True)
+        file_path = _resolve_sigma_file_path(request.filename)
+
+        if file_path.exists():
+            raise HTTPException(status_code=409, detail="Файл уже существует")
+
+        initial_content = (
+            "title: New Sigma Rule\n"
+            "id: \n"
+            "status: experimental\n"
+            "description: \n"
+            "logsource:\n"
+            "  category: webserver\n"
+            "detection:\n"
+            "  selection:\n"
+            '    raw|contains: ""\n'
+            "  condition: selection\n"
+            "level: medium\n"
+        )
+        file_path.write_text(initial_content, encoding="utf-8")
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": file_path.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating Sigma file: {e}")
+        raise HTTPException(
+            status_code=500, detail="Ошибка создания файла Sigma правила"
+        )
+
+
+@app.get("/api/config/sigma/files/{filename}")
+async def get_sigma_rule_file_content(filename: str):
+    """Get Sigma rule file content."""
+    try:
+        file_path = _resolve_sigma_file_path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+
+        return {
+            "filename": file_path.name,
+            "content": file_path.read_text(encoding="utf-8"),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading Sigma file '{filename}': {e}")
+        raise HTTPException(status_code=500, detail="Ошибка чтения файла Sigma правила")
+
+
+@app.put("/api/config/sigma/files/{filename}")
+async def update_sigma_rule_file_content(
+    filename: str, request: RuleContentUpdateRequest
+):
+    """Update Sigma rule file content and reload detection pipeline."""
+    try:
+        file_path = _resolve_sigma_file_path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+
+        file_path.write_text(request.content, encoding="utf-8")
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": file_path.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating Sigma file '{filename}': {e}")
+        raise HTTPException(
+            status_code=500, detail="Ошибка сохранения файла Sigma правила"
+        )
+
+
+@app.delete("/api/config/sigma/files/{filename}")
+async def delete_sigma_rule_file(filename: str):
+    """Delete Sigma rule file and reload detection pipeline."""
+    try:
+        file_path = _resolve_sigma_file_path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+
+        file_path.unlink()
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": file_path.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting Sigma file '{filename}': {e}")
+        raise HTTPException(
+            status_code=500, detail="Ошибка удаления файла Sigma правила"
+        )
+
+
+@app.get("/api/config/yara")
+async def get_yara_rule_file_content():
+    """Get single YARA rules file content."""
+    try:
+        if not YARA_RULE_FILE.exists() or not YARA_RULE_FILE.is_file():
+            raise HTTPException(status_code=404, detail="Yara файл не найден")
+
+        return {
+            "filename": YARA_RULE_FILE.name,
+            "content": YARA_RULE_FILE.read_text(encoding="utf-8"),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading Yara file: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка чтения Yara файла")
+
+
+@app.put("/api/config/yara")
+async def update_yara_rule_file_content(request: RuleContentUpdateRequest):
+    """Update YARA rules file content and reload detection pipeline."""
+    try:
+        YARA_RULES_DIR.mkdir(parents=True, exist_ok=True)
+        YARA_RULE_FILE.write_text(request.content, encoding="utf-8")
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": YARA_RULE_FILE.name}
+    except Exception as e:
+        logger.error(f"Error updating Yara file: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка сохранения Yara файла")
 
 
 @app.get("/api/statistics/severity")
@@ -1311,8 +1640,21 @@ async def send_chat_message(request: ChatSendRequest):
         )
 
 
+@app.post("/api/logs/upload/cancel")
+async def cancel_log_upload_analysis(user_id: int):
+    """Cancel active log analysis for a user."""
+    async with log_upload_cancel_lock:
+        cancel_event = log_upload_cancel_events.get(user_id)
+        if cancel_event is not None:
+            cancel_event.set()
+            return {"success": True, "message": "Запрошена отмена анализа лога"}
+
+    return {"success": False, "message": "Активный анализ для отмены не найден"}
+
+
 @app.post("/api/logs/upload")
 async def upload_log_file(
+    request: Request,
     user_id: int,
     file: UploadFile = File(...),
     use_v2: bool = True,
@@ -1333,6 +1675,8 @@ async def upload_log_file(
         use_v2: Deprecated. Анализ всегда выполняется через AI Agent v2.
 
     """
+    cancel_event = await _start_log_upload_cancellation_scope(user_id)
+
     try:
         # Проверяем расширение файла
         if not file.filename.endswith(".log"):
@@ -1380,6 +1724,10 @@ async def upload_log_file(
             f"размер: {len(content_str)} байт, строк: {non_empty_lines_count}"
         )
 
+        if await request.is_disconnected():
+            raise HTTPException(status_code=499, detail="Клиент прервал загрузку")
+        _raise_if_log_upload_canceled(cancel_event)
+
         conn = await asyncpg.connect(DATABASE_URL, timeout=10)
         try:
             await _try_insert_user_log(
@@ -1404,7 +1752,30 @@ async def upload_log_file(
                 AGENT_ACTION_ANALYZE_LOGS,
                 f"Анализ логов через AI Agent v2: файл={file.filename}",
             )
-            analysis_result = await analyze_log_v2(content_str)
+            analyze_task = asyncio.create_task(analyze_log_v2(content_str))
+            cancel_wait_task = asyncio.create_task(cancel_event.wait())
+            done, pending = await asyncio.wait(
+                {analyze_task, cancel_wait_task},
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for pending_task in pending:
+                pending_task.cancel()
+
+            if cancel_wait_task in done and cancel_event.is_set():
+                analyze_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await analyze_task
+                raise HTTPException(
+                    status_code=499, detail="Анализ лога отменен пользователем"
+                )
+
+            analysis_result = await analyze_task
+
+            if await request.is_disconnected():
+                raise HTTPException(status_code=499, detail="Клиент прервал загрузку")
+            _raise_if_log_upload_canceled(cancel_event)
+
             analysis_error = str(analysis_result.get("error") or "")
             lowered_analysis_error = analysis_error.lower()
 
@@ -1439,6 +1810,7 @@ async def upload_log_file(
                 AGENT_ACTION_BUILD_REPORT,
                 "Формирование итогового отчета по результатам анализа",
             )
+            _raise_if_log_upload_canceled(cancel_event)
 
             # Сохраняем содержимое лога
             log_row = await conn.fetchrow(
@@ -1450,6 +1822,7 @@ async def upload_log_file(
                 content_str,
             )
             log_id = log_row["log_id"]
+            _raise_if_log_upload_canceled(cancel_event)
 
             # Создаем отчет на основе анализа GigaChat
             report_row = await conn.fetchrow(
@@ -1502,11 +1875,30 @@ async def upload_log_file(
                 f"Ответ на запрос загрузки логов: user_id={user_id}, report_id={report_id}",
             )
 
-            await _broadcast_incident_event(
-                title=f"Новый инцидент из файла {file.filename}",
-                description=analysis_result["description"],
-                severity_level_id=analysis_result.get("severity_level_id"),
-                source="Manual Log Upload",
+            _schedule_background_task(
+                _broadcast_incident_event(
+                    title="Найден новый инцидент",
+                    description=analysis_result["description"],
+                    severity_level_id=analysis_result.get("severity_level_id"),
+                    source="Manual Log Upload",
+                ),
+                "broadcast_incident_event",
+            )
+            _schedule_background_task(
+                _broadcast_chat_response_event(
+                    user_id=user_id,
+                    response_text=analysis_result["description"],
+                    mode="manual_upload_report",
+                ),
+                "broadcast_manual_upload_chat_response_event",
+            )
+            _schedule_background_task(
+                _broadcast_report_created_event(
+                    report_id=report_id,
+                    source="Manual Log Upload",
+                    severity_level_id=analysis_result.get("severity_level_id"),
+                ),
+                "broadcast_report_created_event",
             )
 
             return response
@@ -1521,6 +1913,8 @@ async def upload_log_file(
         raise HTTPException(
             status_code=500, detail=f"Ошибка при загрузке файла: {str(e)}"
         )
+    finally:
+        await _finish_log_upload_cancellation_scope(user_id, cancel_event)
 
 
 # --- CLI Commands ---
@@ -1531,6 +1925,7 @@ AVAILABLE_COMMANDS = {
     "agent_logs": "Просмотр логов агента (опционально: agent_logs <limit>)",
     "user_logs": "Просмотр логов пользователей (опционально: user_logs <limit>)",
     "pipeline_lines": "Показать текущее количество строк в external и processed",
+    "processed_lines": "Показать последние строки из processed (опционально: processed_lines <limit>)",
     "clear_pipeline_logs": "Полная очистка логов в external и processed",
     "agent_status": "Показать текущий этап агента по последнему AgentLogs",
     "help": "Показать справку",
@@ -1696,10 +2091,14 @@ def _count_lines_in_file(path: Path) -> int:
         return 0
 
 
-def _collect_directory_stats(path: Path) -> tuple[int, int]:
+def _collect_directory_stats(
+    path: Path,
+    exclude_file_names: set[str] | None = None,
+) -> tuple[int, int]:
     """Return (files_count, lines_count) for all files under directory."""
     files_count = 0
     lines_count = 0
+    excluded_names = exclude_file_names or set()
 
     if not path.exists() or not path.is_dir():
         return files_count, lines_count
@@ -1707,11 +2106,126 @@ def _collect_directory_stats(path: Path) -> tuple[int, int]:
     for file_path in path.rglob("*"):
         if not file_path.is_file():
             continue
+        if file_path.name in excluded_names:
+            continue
 
         files_count += 1
         lines_count += _count_lines_in_file(file_path)
 
     return files_count, lines_count
+
+
+def _read_chunk_marker_line(state_file: Path) -> int | None:
+    """Read last emitted stream sequence (marker line) from chunk state file."""
+    if not state_file.exists() or not state_file.is_file():
+        return None
+
+    try:
+        with state_file.open("r", encoding="utf-8", errors="replace") as file_obj:
+            for raw_line in file_obj:
+                line = raw_line.strip()
+                if not line or not line.startswith("H\t"):
+                    continue
+
+                fields = line.split("\t")
+                if len(fields) < 5:
+                    return None
+
+                marker_line = int(fields[4])
+                return marker_line if marker_line >= 0 else 0
+    except Exception:
+        return None
+
+    return None
+
+
+def _read_chunk_state_progress(state_file: Path) -> tuple[int, int] | None:
+    """Read (marker_line, pending_lines) from Vector chunk state header line."""
+    if not state_file.exists() or not state_file.is_file():
+        return None
+
+    try:
+        with state_file.open("r", encoding="utf-8", errors="replace") as file_obj:
+            for raw_line in file_obj:
+                line = raw_line.strip()
+                if not line or not line.startswith("H\t"):
+                    continue
+
+                fields = line.split("\t")
+                if len(fields) < 5:
+                    return None
+
+                next_record_seq = int(fields[2])
+                last_emitted_record_seq = int(fields[4])
+
+                marker_line = max(0, last_emitted_record_seq)
+                pending_lines = max(0, (next_record_seq - 1) - last_emitted_record_seq)
+                return marker_line, pending_lines
+    except Exception:
+        return None
+
+    return None
+
+
+def _extract_marker_from_payload(payload: object) -> int | None:
+    """Extract processed marker from known payload shapes."""
+    if not isinstance(payload, dict):
+        return None
+
+    log_payload = (
+        payload.get("log") if isinstance(payload.get("log"), dict) else payload
+    )
+
+    end_record_sequence = log_payload.get("end_record_sequence")
+    if isinstance(end_record_sequence, int) and end_record_sequence >= 0:
+        return end_record_sequence
+
+    records = log_payload.get("records")
+    if isinstance(records, list) and records:
+        last_seq = 0
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            stream_seq = record.get("stream_seq")
+            if isinstance(stream_seq, int) and stream_seq > last_seq:
+                last_seq = stream_seq
+
+        if last_seq > 0:
+            return last_seq
+
+    return None
+
+
+def _read_chunk_marker_line_from_processed(processed_dir: Path) -> int | None:
+    """Infer marker line from processed files when chunk state file is unavailable."""
+    if not processed_dir.exists() or not processed_dir.is_dir():
+        return None
+
+    max_marker: int | None = None
+    files = sorted(path for path in processed_dir.rglob("*") if path.is_file())
+
+    for file_path in files:
+        try:
+            with file_path.open("r", encoding="utf-8", errors="replace") as file_obj:
+                for line in file_obj:
+                    text = line.strip()
+                    if not text:
+                        continue
+
+                    try:
+                        payload = json.loads(text)
+                    except json.JSONDecodeError:
+                        continue
+
+                    marker = _extract_marker_from_payload(payload)
+                    if marker is not None and (
+                        max_marker is None or marker > max_marker
+                    ):
+                        max_marker = marker
+        except Exception:
+            continue
+
+    return max_marker
 
 
 def _clear_directory_contents(path: Path) -> tuple[int, int]:
@@ -1746,29 +2260,148 @@ def show_pipeline_lines() -> None:
     processed_logs_dir = os.getenv(
         "PIPELINE_PROCESSED_LOGS_DIR", "/app/shared/processed"
     )
+    chunk_state_file = Path(
+        os.getenv("CHUNK_STATE_FILE", "/var/lib/vector/chunk_logs_state.tsv")
+    )
+    chunk_reset_marker = Path(
+        os.getenv(
+            "PIPELINE_CHUNK_RESET_MARKER_FILE",
+            "/app/shared/external/.chunk_state_reset",
+        )
+    )
+    analysis_marker_file = _resolve_analysis_marker_file(Path(processed_logs_dir))
 
     targets = {
         "external": Path(external_logs_dir),
         "processed": Path(processed_logs_dir),
+    }
+    external_excluded_names = {
+        ".chunk_state_reset",
+        chunk_state_file.name,
+        f"{chunk_state_file.name}.tmp",
+    }
+    processed_excluded_names = {
+        analysis_marker_file.name,
     }
 
     print("\n" + "=" * 60)
     print("  Статистика строк pipeline")
     print("=" * 60)
 
-    total_files = 0
-    total_lines = 0
+    external_lines = 0
 
     for label, target in targets.items():
-        files_count, lines_count = _collect_directory_stats(target)
-        total_files += files_count
-        total_lines += lines_count
-        print(
-            f"{label:10} files={files_count:<6} lines={lines_count:<10} path={target}"
+        excluded_names = (
+            external_excluded_names if label == "external" else processed_excluded_names
         )
+        files_count, lines_count = _collect_directory_stats(
+            target,
+            exclude_file_names=excluded_names,
+        )
+        if label == "external":
+            external_lines = lines_count
+        print(f"{label:10} lines={lines_count:<10} path={target}")
+
+    marker_line: int | None = None
+    pending_lines: int | None = None
+
+    if chunk_reset_marker.exists():
+        marker_line = 0
+        pending_lines = external_lines
+    else:
+        persisted_marker = _read_analysis_marker(analysis_marker_file)
+        if isinstance(persisted_marker, int) and persisted_marker >= 0:
+            marker_line = persisted_marker
+            pending_lines = max(0, external_lines - marker_line)
+        else:
+            runtime_status = _fetch_runtime_status_from_api()
+            analysis_state = runtime_analysis_state
+            if runtime_status and isinstance(runtime_status.get("analysis"), dict):
+                analysis_state = runtime_status["analysis"]
+
+            completed_marker = analysis_state.get("last_completed_end_record_seq")
+            if (
+                isinstance(completed_marker, int)
+                and completed_marker >= 0
+                and completed_marker <= external_lines
+            ):
+                marker_line = completed_marker
+                pending_lines = max(0, external_lines - marker_line)
+
+    if marker_line is None or pending_lines is None:
+        state_progress = _read_chunk_state_progress(chunk_state_file)
+        if state_progress is not None:
+            marker_line, _ = state_progress
+            pending_lines = max(0, external_lines - marker_line)
+        else:
+            marker_line = _read_chunk_marker_line(chunk_state_file)
+            if marker_line is None:
+                marker_line = _read_chunk_marker_line_from_processed(
+                    targets["processed"]
+                )
+            if marker_line is not None:
+                pending_lines = max(0, external_lines - marker_line)
+
+    if marker_line is None or pending_lines is None:
+        print("Остановился на неизвестной строке, осталось строк неизвестно.")
+    else:
+        marker_line = min(marker_line, external_lines)
+        pending_lines = max(0, external_lines - marker_line)
+        print(f"Остановился на {marker_line} строке, осталось строк {pending_lines}.")
 
     print("")
-    print(f"Итог: files={total_files}, lines={total_lines}\n")
+
+
+def show_processed_lines(limit: int = 20) -> None:
+    """Show last N lines from files in processed pipeline directory."""
+    processed_logs_dir = os.getenv(
+        "PIPELINE_PROCESSED_LOGS_DIR", "/app/shared/processed"
+    )
+    target = Path(processed_logs_dir)
+
+    print("\n" + "=" * 60)
+    print("  Последние строки из processed")
+    print("=" * 60)
+
+    if not target.exists():
+        print(f"⚠ Путь не существует: {target}\n")
+        return
+
+    if not target.is_dir():
+        print(f"⚠ Путь не является директорией: {target}\n")
+        return
+
+    files = sorted([path for path in target.rglob("*") if path.is_file()])
+    if not files:
+        print(f"Файлы не найдены в: {target}\n")
+        return
+
+    collected_lines: list[tuple[str, int, str]] = []
+    for file_path in files:
+        try:
+            with file_path.open("r", encoding="utf-8", errors="replace") as file_obj:
+                for line_no, line in enumerate(file_obj, start=1):
+                    collected_lines.append((str(file_path), line_no, line.rstrip("\n")))
+        except Exception as exc:
+            print(f"⚠ Не удалось прочитать {file_path}: {exc}")
+
+    if not collected_lines:
+        print("Строки не найдены\n")
+        return
+
+    effective_limit = max(1, limit)
+    lines_to_show = collected_lines[-effective_limit:]
+
+    print(
+        f"Всего файлов: {len(files)}, всего строк: {len(collected_lines)}, "
+        f"показываю последние: {len(lines_to_show)}"
+    )
+    print("-" * 60)
+
+    for file_path, line_no, content in lines_to_show:
+        print(f"{file_path}:{line_no} | {content}")
+
+    print("")
 
 
 def clear_pipeline_logs() -> None:
@@ -1777,6 +2410,13 @@ def clear_pipeline_logs() -> None:
     processed_logs_dir = os.getenv(
         "PIPELINE_PROCESSED_LOGS_DIR", "/app/shared/processed"
     )
+    chunk_reset_marker = Path(
+        os.getenv(
+            "PIPELINE_CHUNK_RESET_MARKER_FILE",
+            "/app/shared/external/.chunk_state_reset",
+        )
+    )
+    analysis_marker_file = _resolve_analysis_marker_file(Path(processed_logs_dir))
 
     targets = {
         "external": Path(external_logs_dir),
@@ -1808,7 +2448,36 @@ def clear_pipeline_logs() -> None:
             % (label, files_deleted, lines_deleted, target)
         )
 
-    print("-" * 90)
+    marker_created = False
+    marker_error = None
+    try:
+        chunk_reset_marker.parent.mkdir(parents=True, exist_ok=True)
+        chunk_reset_marker.write_text(
+            f"reset_requested_at={datetime.now(UTC).isoformat()}\n",
+            encoding="utf-8",
+        )
+        marker_created = True
+    except Exception as exc:
+        marker_error = str(exc)
+
+    print("-" * 60)
+    if marker_created:
+        print(f"✓ Маркер сброса прогресса создан: {chunk_reset_marker}")
+    else:
+        print(
+            "⚠ Не удалось создать маркер сброса прогресса: "
+            f"{chunk_reset_marker} ({marker_error})"
+        )
+
+    marker_reset_written = _write_analysis_marker(analysis_marker_file, 0)
+    if marker_reset_written:
+        print(f"✓ Маркер анализа сброшен: {analysis_marker_file}")
+    else:
+        print(f"⚠ Не удалось сбросить маркер анализа: {analysis_marker_file}")
+
+    runtime_analysis_state["last_completed_end_record_seq"] = 0
+    runtime_analysis_state["current_batch_end_record_seq"] = None
+
     print(f"Итог: удалено файлов={total_files}, строк={total_lines}\n")
 
 
@@ -1985,6 +2654,9 @@ def execute_command(command: str):
         show_user_logs(limit)
     elif cmd == "pipeline_lines":
         show_pipeline_lines()
+    elif cmd == "processed_lines":
+        limit = _parse_limit_arg(parts, default=20)
+        show_processed_lines(limit)
     elif cmd == "clear_pipeline_logs":
         clear_pipeline_logs()
     elif cmd == "agent_status":

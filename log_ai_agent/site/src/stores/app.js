@@ -17,7 +17,11 @@ export const useAppStore = defineStore('app', () => {
   
   // Состояние непрочитанных сообщений в чате
   const unreadChatMessages = ref(0)
+  const chatIsLoading = ref(false)
+  const chatIsLogAnalysisInProgress = ref(false)
+  const chatLogUploadAbortController = ref(null)
   const originalPageTitle = ref(document.title)
+  const reportsUpdateVersion = ref(0)
 
   // Инициализация: восстанавливаем сессию из localStorage
   const initializeAuth = () => {
@@ -112,6 +116,9 @@ export const useAppStore = defineStore('app', () => {
       isAuthenticated.value = false
       currentUser.value = null
       token.value = null
+      chatIsLoading.value = false
+      chatIsLogAnalysisInProgress.value = false
+      chatLogUploadAbortController.value = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('current_user')
     }
@@ -260,7 +267,11 @@ export const useAppStore = defineStore('app', () => {
       statistics.value.suspiciousCount++
     }
     statistics.value.totalIncidents++
-    addNotification(`Новый инцидент: ${incident.title}`, 'warning')
+    if (incident.source === 'Manual Log Upload') {
+      addNotification('Отчет по запросу был сформирован', 'info')
+      return
+    }
+    addNotification('Найден новый инцидент!', 'warning')
   }
   
   /**
@@ -290,6 +301,13 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  /**
+   * Сигнализирует страницам отчетов о появлении нового отчета в реальном времени.
+   */
+  const notifyReportsUpdated = (_payload = null) => {
+    reportsUpdateVersion.value += 1
+  }
+
   return {
     isAuthenticated,
     currentUser,
@@ -300,6 +318,10 @@ export const useAppStore = defineStore('app', () => {
     isLoadingIncidents,
     statistics,
     unreadChatMessages,
+    chatIsLoading,
+    chatIsLogAnalysisInProgress,
+    chatLogUploadAbortController,
+    reportsUpdateVersion,
     login,
     logout,
     addNotification,
@@ -308,5 +330,6 @@ export const useAppStore = defineStore('app', () => {
     addUnreadChatMessage,
     clearUnreadChatMessages,
     addIncident,
+    notifyReportsUpdated,
   }
 })
