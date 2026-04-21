@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir uv
 
-# Install huggingface_hub CLI for model download
-RUN uv pip install --system huggingface_hub
+# Install huggingface_hub + hftransfer for progress display
+RUN uv pip install --system huggingface_hub hftransfer
 
 WORKDIR /app
 
