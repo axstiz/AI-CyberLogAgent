@@ -19,8 +19,14 @@ RANDOM_SEED="${RANDOM_SEED:-42}"
 HOSTNAME_OVERRIDE="${HOSTNAME_OVERRIDE:-target-node-01}"
 FLOG_RPS="${FLOG_RPS:-5}"
 MAX_LOG_LINES="${MAX_LOG_LINES:-0}"
+MAX_INCIDENTS="${MAX_INCIDENTS:-0}"
+MIN_INCIDENTS="${MIN_INCIDENTS:-0}"
+DISABLE_INCIDENTS="${DISABLE_INCIDENTS:-0}"
+STRICT_TARGETS="0"
+MAX_LOGS_REACHED="0"
 
 LOG_LINES_EMITTED=0
+INCIDENTS_EMITTED=0
 
 # Allowed MITRE techniques for simulation only.
 TECHNIQUES=(
@@ -61,8 +67,15 @@ emit_stdout() {
 
   LOG_LINES_EMITTED=$((LOG_LINES_EMITTED + 1))
   if (( MAX_LOG_LINES > 0 && LOG_LINES_EMITTED >= MAX_LOG_LINES )); then
+    if (( MIN_INCIDENTS > 0 && INCIDENTS_EMITTED < MIN_INCIDENTS )); then
+      MAX_LOGS_REACHED="1"
+      return 0
+    fi
     # Create stop marker atomically and announce the limit only once.
     if ( set -o noclobber; echo "1" > "${STOP_REQUEST_FILE}" ) 2>/dev/null; then
+      if (( STRICT_TARGETS == 1 )); then
+        return 0
+      fi
       echo "$(iso_now) app {\"level\":\"INFO\",\"msg\":\"Max log limit reached\",\"max_logs\":${MAX_LOG_LINES}}"
     fi
   fi
@@ -104,6 +117,29 @@ validate_env() {
 
   if ! [[ "${MAX_LOG_LINES}" =~ ^[0-9]+$ ]]; then
     emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MAX_LOG_LINES must be integer >= 0\",\"value\":\"${MAX_LOG_LINES}\"}"
+    exit 1
+  fi
+
+  if ! [[ "${MAX_INCIDENTS}" =~ ^[0-9]+$ ]]; then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MAX_INCIDENTS must be integer >= 0\",\"value\":\"${MAX_INCIDENTS}\"}"
+    exit 1
+  fi
+
+  if ! [[ "${MIN_INCIDENTS}" =~ ^[0-9]+$ ]]; then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MIN_INCIDENTS must be integer >= 0\",\"value\":\"${MIN_INCIDENTS}\"}"
+    exit 1
+  fi
+
+  if [[ "${DISABLE_INCIDENTS}" != "0" && "${DISABLE_INCIDENTS}" != "1" ]]; then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"DISABLE_INCIDENTS must be 0 or 1\",\"value\":\"${DISABLE_INCIDENTS}\"}"
+    exit 1
+  fi
+  if [[ "${DISABLE_INCIDENTS}" == "1" && ( "${MAX_INCIDENTS}" != "0" || "${MIN_INCIDENTS}" != "0" ) ]]; then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MIN/MAX incidents must be 0 when DISABLE_INCIDENTS=1\"}"
+    exit 1
+  fi
+  if (( MIN_INCIDENTS > 0 && MAX_INCIDENTS > 0 )); then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MIN_INCIDENTS is incompatible with MAX_INCIDENTS\"}"
     exit 1
   fi
 }
@@ -320,11 +356,68 @@ run_technique() {
   mkdir -p "$(dirname "${GOLDEN_LOG_FILE}")"
   echo "${end_ts}|${technique}|${start_ts}|${end_ts}|${cleanup_status}" >> "${GOLDEN_LOG_FILE}"
 
+  INCIDENTS_EMITTED=$((INCIDENTS_EMITTED + 1))
+  if (( MIN_INCIDENTS > 0 && INCIDENTS_EMITTED >= MIN_INCIDENTS && MAX_LOGS_REACHED == 1 )); then
+    if ( set -o noclobber; echo "1" > "${STOP_REQUEST_FILE}" ) 2>/dev/null; then
+      echo "$(iso_now) app {\"level\":\"INFO\",\"msg\":\"Max log limit reached after min incidents\",\"max_logs\":${MAX_LOG_LINES},\"min_incidents\":${MIN_INCIDENTS}}"
+    fi
+  fi
+  if (( MAX_INCIDENTS > 0 && INCIDENTS_EMITTED >= MAX_INCIDENTS )); then
+    if (( STRICT_TARGETS == 1 )); then
+      :
+    else
+      # Create stop marker atomically and announce the limit only once.
+      if ( set -o noclobber; echo "1" > "${STOP_REQUEST_FILE}" ) 2>/dev/null; then
+        emit_stdout "$(iso_now) app {\"level\":\"INFO\",\"msg\":\"Max incidents limit reached\",\"max_incidents\":${MAX_INCIDENTS}}"
+      fi
+    fi
+  fi
+
   if [[ "${cleanup_status}" == "CLEANUP_FAIL" ]]; then
     echo "1" > "${UNHEALTHY_FLAG_FILE}"
     emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"Cleanup failed, exiting for restart\"}"
     exit 1
   fi
+}
+
+run_bounded_sequence() {
+  local total_lines="${MAX_LOG_LINES}"
+  local total_incidents="${MAX_INCIDENTS}"
+  local incident_lines=4
+  local min_needed=$(( total_incidents * incident_lines ))
+
+  if (( total_lines < min_needed )); then
+    emit_stdout "$(iso_now) app {\"level\":\"ERROR\",\"msg\":\"MAX_LOG_LINES too small for MAX_INCIDENTS\",\"max_logs\":${MAX_LOG_LINES},\"max_incidents\":${MAX_INCIDENTS},\"min_required\":${min_needed}}"
+    exit 1
+  fi
+
+  local remaining=$(( total_lines - min_needed ))
+  local gaps=$(( total_incidents + 1 ))
+  local base=$(( remaining / gaps ))
+  local extra=$(( remaining % gaps ))
+  local g
+
+  for ((g=0; g<gaps; g++)); do
+    local noise_count="${base}"
+    if (( g < extra )); then
+      noise_count=$((noise_count + 1))
+    fi
+    local i
+    for ((i=0; i<noise_count; i++)); do
+      generate_noise_line "$((RANDOM % 8))"
+    done
+
+    if (( g < total_incidents )); then
+      if [[ "${DISABLE_INCIDENTS}" == "1" ]]; then
+        break
+      fi
+      if [[ "${ATTACK_MODE}" == "fixed" ]]; then
+        run_technique "${FIXED_TECHNIQUE}"
+      else
+        run_technique "$(pick_random_technique)"
+      fi
+    fi
+  done
 }
 
 perform_cleanup() {
@@ -426,10 +519,12 @@ main_loop() {
       break
     fi
 
-    if [[ "${ATTACK_MODE}" == "fixed" ]]; then
-      run_technique "${FIXED_TECHNIQUE}"
-    else
-      run_technique "$(pick_random_technique)"
+    if [[ "${DISABLE_INCIDENTS}" != "1" ]]; then
+      if [[ "${ATTACK_MODE}" == "fixed" ]]; then
+        run_technique "${FIXED_TECHNIQUE}"
+      else
+        run_technique "$(pick_random_technique)"
+      fi
     fi
   done
 }
@@ -447,6 +542,16 @@ bootstrap() {
 
   echo "$$" > "${ORCHESTRATOR_PID_FILE}"
   validate_env
+
+  if (( MAX_LOG_LINES > 0 && MAX_INCIDENTS > 0 )); then
+    STRICT_TARGETS="1"
+  fi
+
+  if (( STRICT_TARGETS == 1 )); then
+    run_bounded_sequence
+    rm -f "${ORCHESTRATOR_PID_FILE}" "${STOP_REQUEST_FILE}"
+    exit 0
+  fi
 
   emit_stdout "$(iso_now) app {\"level\":\"INFO\",\"msg\":\"Orchestrator started\",\"mode\":\"${ATTACK_MODE}\",\"log_rate\":${LOG_RATE},\"seed\":${RANDOM_SEED},\"host\":\"${HOSTNAME_OVERRIDE}\",\"stream_file\":\"${STREAM_LOG_FILE}\"}"
   start_flog_noise
