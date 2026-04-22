@@ -133,7 +133,9 @@ def initialize_mitre_knowledge_base(
         techniques = _load_techniques_from_stix(stix_file)
         if techniques:
             count = chroma_mgr.load_mitre_techniques(techniques)
-            logger.info(f"Knowledge base initialized with {count} techniques from local file")
+            logger.info(
+                f"Knowledge base initialized with {count} techniques from local file"
+            )
             return chroma_mgr
 
     logger.info("Local MITRE data not found. Downloading from GitHub...")
