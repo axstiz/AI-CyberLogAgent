@@ -7,6 +7,7 @@ UNHEALTHY_FLAG_FILE="/tmp/unhealthy"
 STOP_REQUEST_FILE="/tmp/stop_requested"
 SIM_SYSLOG_FILE="/tmp/syslog_sim.log"
 GOLDEN_LOG_FILE="/var/log/golden/attack_timeline.log"
+INCIDENT_MARKERS_FILE="/var/log/golden/incident_markers.log"
 
 ATTACK_MODE="${ATTACK_MODE:-random}"
 FIXED_TECHNIQUE="${FIXED_TECHNIQUE:-T1059}"
@@ -44,6 +45,16 @@ iso_now() {
 
 epoch_now() {
   date +%s
+}
+
+record_incident_marker() {
+  local ts="$1"
+  local event="$2"
+  local technique="$3"
+  local details="$4"
+
+  mkdir -p "$(dirname "${INCIDENT_MARKERS_FILE}")"
+  echo "${ts}|${event}|${technique}|${details}" >> "${INCIDENT_MARKERS_FILE}"
 }
 
 emit_stdout() {
@@ -288,6 +299,7 @@ run_technique() {
   start_ts="$(iso_now)"
 
   emit_stdout "${start_ts} [TEST_START] Running ${technique}"
+  record_incident_marker "${start_ts}" "TEST_START" "${technique}" "Running technique"
 
   case "${technique}" in
     T1059) simulate_T1059 "$(epoch_now)" ;;
@@ -315,6 +327,7 @@ run_technique() {
 
   end_ts="$(iso_now)"
   emit_stdout "${end_ts} [TEST_END] ${technique} status=${cleanup_status}"
+  record_incident_marker "${end_ts}" "TEST_END" "${technique}" "status=${cleanup_status}"
   mkdir -p "$(dirname "${GOLDEN_LOG_FILE}")"
   echo "${end_ts}|${technique}|${start_ts}|${end_ts}|${cleanup_status}" >> "${GOLDEN_LOG_FILE}"
 
@@ -436,6 +449,9 @@ bootstrap() {
   RANDOM="${RANDOM_SEED}"
   mkdir -p /var/log/golden
   : > "${SIM_SYSLOG_FILE}"
+  {
+    echo "TIMESTAMP|EVENT|TECHNIQUE|DETAILS"
+  } > "${INCIDENT_MARKERS_FILE}"
   epoch_now > "${LAST_STDOUT_TS_FILE}"
   rm -f "${UNHEALTHY_FLAG_FILE}"
   rm -f "${STOP_REQUEST_FILE}"

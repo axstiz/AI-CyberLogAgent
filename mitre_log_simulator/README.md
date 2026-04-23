@@ -12,6 +12,7 @@
 - Периодически инжектит безопасные симуляции техник MITRE ATT&CK (10 техник).
 - После каждой атаки выполняет cleanup и пишет статус в stdout.
 - Ведет golden-журнал на volume хоста в файле /var/log/golden/attack_timeline.log.
+- Ведет файл меток инцидентов с таймстампами в /var/log/golden/incident_markers.log.
 - Поддерживает детерминизм через RANDOM_SEED.
 
 ## Структура
@@ -169,6 +170,25 @@ TIMESTAMP|TECHNIQUE|START|END|CLEANUP_STATUS
 2026-04-03T12:35:00Z|T1059|2026-04-03T12:34:59Z|2026-04-03T12:35:00Z|CLEANUP_OK
 ```
 
+## Incident markers log
+
+Файл: /var/log/golden/incident_markers.log
+
+Формат строки:
+
+```text
+TIMESTAMP|EVENT|TECHNIQUE|DETAILS
+```
+
+Пример:
+
+```text
+2026-04-03T12:34:59Z|TEST_START|T1059|Running technique
+2026-04-03T12:35:00Z|TEST_END|T1059|status=CLEANUP_OK
+```
+
+Этот файл нужен для прямого сравнения с результатами анализатора: видны точные таймстампы инцидентов в сгенерированном потоке.
+
 ## Healthcheck
 
 Контейнер считается healthy, если:
@@ -195,6 +215,12 @@ docker logs -f mitre-log-simulator | grep "TEST_START\|TEST_END\|CLEANUP_"
 
 ```bash
 tail -f ./golden_logs/attack_timeline.log
+```
+
+### Проверка меток инцидентов
+
+```bash
+tail -f ./golden_logs/incident_markers.log
 ```
 
 ### Проверка health
