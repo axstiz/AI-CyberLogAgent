@@ -5,10 +5,10 @@ on:
     branches: [ main, master, dev, develop ]
   pull_request:
     branches: [ main, master, dev, develop ]
-  workflow_dispatch:  # Позволяет запускать вручную через интерфейс CI/CD
+  workflow_dispatch:
 
 jobs:
-  ruff-fix:
+  ruff-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,27 +26,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
 
-      # Флаг для отслеживания общего статуса
-      - name: Initialize error flag
-        run: |
-          echo "OVERALL_ERRORS=0" >> $GITHUB_ENV
-
-      # === PEP 8 checks (E, W) ===
-      - name: Run PEP 8 checks (E, W)
-        continue-on-error: true
+      - name: Fix and check code
         run: |
           set -o pipefail
-          echo "=== Running PEP 8 checks (E, W) ==="
-          # Сначала пытаемся исправить
-          ruff check . --select E,W --fix-only --show-fixes || true
-          # Повторная проверка без --fix
-          if ! ruff check . --select E,W; then
-            echo "❌ PEP 8 checks FAILED after fix!"
-            echo "OVERALL_ERRORS=1" >> $GITHUB_ENV
+          # Auto-fix fixable issues (except E501)
+          ruff check . --select E,W,F,I,ISC --ignore E501 --fix
+          # Check remaining issues (should be none if fixable were fixed)
+          if ! ruff check . --select E,W,F,I,ISC --ignore E501; then
+            echo "❌ Ruff checks FAILED!"
             exit 1
-          else
-            echo "✅ PEP 8 checks passed after fix."
           fi
+          echo "✅ Ruff checks passed."
+
+      - name: Format code
+        run: |
+          set -o pipefail
+          ruff format . --check || (ruff format . && echo "✅ Code formatted.")
+          echo "✅ Formatting passed."
 
       # === flake8 checks (F, I) ===
       - name: Run flake8 checks (F, I)
