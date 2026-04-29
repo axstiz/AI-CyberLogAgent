@@ -143,7 +143,7 @@ const createSigmaFile = async () => {
     await configRules.createSigmaFile(fileName.trim())
     await loadSigmaFiles()
     await selectSigmaFile(fileName.trim())
-    appStore.addNotification('Новый Sigma файл создан', 'success')
+    appStore.addNotification('Новый файл успешно создан', 'success')
   } catch (error) {
     console.error('Ошибка создания Sigma файла:', error)
     const message = error?.response?.data?.detail || 'Ошибка создания Sigma файла'
@@ -159,7 +159,7 @@ const saveSigmaFile = async () => {
   sigmaSaving.value = true
   try {
     await configRules.saveSigmaFile(selectedSigmaFile.value, sigmaEditorContent.value)
-    appStore.addNotification('Sigma файл сохранен и обновлен в Docker', 'success')
+    appStore.addNotification('Файл успешно сохранен', 'success')
   } catch (error) {
     console.error('Ошибка сохранения Sigma файла:', error)
     const message = error?.response?.data?.detail || 'Ошибка сохранения Sigma файла'
@@ -198,7 +198,7 @@ const deleteSigmaFile = async () => {
       }
     }
 
-    appStore.addNotification('Sigma файл удален и обновлен в Docker', 'success')
+    appStore.addNotification('Файл успешно удален', 'success')
   } catch (error) {
     console.error('Ошибка удаления Sigma файла:', error)
     const message = error?.response?.data?.detail || 'Ошибка удаления Sigma файла'
@@ -222,7 +222,7 @@ const saveYaraFile = async () => {
   yaraSaving.value = true
   try {
     await configRules.saveYaraFile(yaraEditorContent.value)
-    appStore.addNotification('Yara файл сохранен и обновлен в Docker', 'success')
+    appStore.addNotification('Файл успешно сохранен', 'success')
   } catch (error) {
     console.error('Ошибка сохранения Yara файла:', error)
     const message = error?.response?.data?.detail || 'Ошибка сохранения Yara файла'
