@@ -79,10 +79,9 @@ AI_AGENT_RULES_DIR = APP_DIR / "ai_agent_v2" / "rules"
 SIGMA_RULES_DIR = AI_AGENT_RULES_DIR / "sigma"
 YARA_RULES_DIR = AI_AGENT_RULES_DIR / "yara"
 YARA_RULE_FILE = YARA_RULES_DIR / "cyber_security_rules.yar"
-ENABLE_DOCKER_RULE_SYNC = (
-    os.getenv("ENABLE_DOCKER_RULE_SYNC", "true").strip().lower()
-    in {"1", "true", "yes", "on"}
-)
+ENABLE_DOCKER_RULE_SYNC = os.getenv(
+    "ENABLE_DOCKER_RULE_SYNC", "true"
+).strip().lower() in {"1", "true", "yes", "on"}
 DOCKER_RULE_SYNC_CONTAINER = os.getenv("BACKEND_CONTAINER_NAME", "cyberlog-backend")
 DOCKER_RULES_ROOT = Path(
     os.getenv("DOCKER_RULES_ROOT", "/app/log_ai_agent/ai_agent_v2/rules")
