@@ -1,38 +1,49 @@
-name: Build and Push Docker Image
-
+name: Build with Kaniko and Deploy App to cloud.ru
 on:
   push:
-    branches: [axstiz]
-  workflow_dispatch:
-
 jobs:
-  build-and-push:
+  build_push_image:
+    name: Build and push to Evolution Artifact Registry
     runs-on: ubuntu-latest
-    
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Login to GitVerse Registry
-        uses: docker/login-action@v3
-        with:
-          registry: gitverse.ru
-          username: ${{ gitverse.actor }}
-          password: ${{ secrets.GITVERSE_TOKEN }}
-
-      - name: Build and push with Kaniko
-        uses: docker://gcr.io/kaniko-project/executor:v1.24.0
-        with:
-          context: ./log_ai_agent
-          dockerfile: ./log_ai_agent/Dockerfile
-          destination: gitverse.ru/mitoshi_team/ai-cyberlogagent:latest
-          push-mode: registry
-          verbosity: info
-
-      - name: Push version tag
-        if: startsWith(github.ref, 'v')
+        # создается конфигурационный файл .docker/config.json с учетными данными для авторизации в реестре cloud.ru;
+        # используются секреты CLOUD_RU_REGISTRY, CLOUD_RU_USERNAME, CLOUD_RU_PASSWORD
+      - name: Prepare Kaniko credentials for cloud.ru
         run: |
-          VERSION=${{ gitverse.ref_name }}
-          docker buildx imagetools create \
-            -t gitverse.ru/mitoshi_team/ai-cyberlogagent:${VERSION} \
-            gitverse.ru/mitoshi_team/ai-cyberlogagent:latest
+          mkdir -p "${{ gitverse.workspace }}/.docker"
+ 
+          # Кодируем username:password в base64
+          AUTH=$(echo -n "${{ secrets.CLOUD_RU_USERNAME }}:${{ secrets.CLOUD_RU_PASSWORD }}" | base64 -w0)
+ 
+          # Создаем config.json с credentials
+          cat > "${{ gitverse.workspace }}/.docker/config.json" <<EOF
+          {
+            "auths": {
+              "${{ secrets.CLOUD_RU_REGISTRY }}": {
+                "auth": "${AUTH}"
+              }
+            }
+          }
+          EOF
+ 
+          chmod 600 "${{ gitverse.workspace }}/.docker/config.json"
+          echo "✅ Created config at ${{ gitverse.workspace }}/.docker/config.json"
+        shell: bash
+
+      - name: Kaniko build and push to Evolution Artifact Registry
+        uses: docker://gcr.io/kaniko-project/executor:v1.24.0
+        env:
+          DOCKER_CONFIG: ${{ gitverse.workspace }}/.docker
+        with:
+          args: >-
+            --context=dir://${{ gitverse.workspace }}/axstiz
+            --dockerfile=container-app.Dockerfile
+            --destination=${{ secrets.CLOUD_RU_REGISTRY }}/gitverse_hello:latest
+            --destination=${{ secrets.CLOUD_RU_REGISTRY }}/gitverse_hello:${{ gitverse.run_id }}
+            --verbosity=info
+
+  # Сохранение в Artifact-registry по axstiz/log_ai_agent`
