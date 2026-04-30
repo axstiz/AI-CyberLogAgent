@@ -40,8 +40,8 @@ jobs:
           DOCKER_CONFIG: ${{ gitverse.workspace }}/.docker
         with:
           args: >-
-            --context=dir://${{ gitverse.workspace }}/axstiz
-            --dockerfile=container-app.Dockerfile
+            --context=${{ gitverse.workspace }}/log_ai_agent
+            --dockerfile=Dockerfile
             --destination=${{ secrets.CLOUD_RU_REGISTRY }}/gitverse_hello:latest
             --destination=${{ secrets.CLOUD_RU_REGISTRY }}/gitverse_hello:${{ gitverse.run_id }}
             --verbosity=info
