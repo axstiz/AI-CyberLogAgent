@@ -84,8 +84,10 @@ jobs:
 
       - name: Push new Git tag via API
         if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh api repos/${{ github.repository }}/git/refs \
             -X POST \
-            -F ref="refs/tags/v${{ steps.version.outputs.new_tag }}" \
-            -F sha="${{ github.sha }}"
+            -f ref="refs/tags/v${{ steps.version.outputs.new_tag }}" \
+            -f sha="${{ github.sha }}"
