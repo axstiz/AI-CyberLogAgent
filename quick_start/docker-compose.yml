@@ -1,0 +1,170 @@
+services:
+  db:
+    image: axstiz/wavescan-postgres:latest
+    container_name: ${DB_CONTAINER_NAME:-cyberlog-db}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cyberlog-network
+
+  backend:
+    image: axstiz/wavescan-backend:latest
+    container_name: ${BACKEND_CONTAINER_NAME:-cyberlog-backend}
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PASSWORD_SALT: ${PASSWORD_SALT}
+      HOST: ${BACKEND_HOST:-0.0.0.0}
+      PORT: ${BACKEND_PORT:-8000}
+      DEBUG: ${DEBUG:-False}
+      FRONTEND_URL: ${FRONTEND_URL}
+      KAFKA_ENABLED: ${KAFKA_ENABLED:-true}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-processed-logs-batches}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID:-cyberlog-backend-group}
+      KAFKA_AUTO_OFFSET_RESET: ${KAFKA_AUTO_OFFSET_RESET:-earliest}
+      KAFKA_PROCESS_RETRY_ATTEMPTS: ${KAFKA_PROCESS_RETRY_ATTEMPTS:-3}
+      KAFKA_RETRY_BACKOFF_SECONDS: ${KAFKA_RETRY_BACKOFF_SECONDS:-2}
+      KAFKA_DLQ_ENABLED: ${KAFKA_DLQ_ENABLED:-true}
+      KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC:-processed-logs-batches-dlq}
+      PIPELINE_EXTERNAL_LOGS_DIR: ${PIPELINE_EXTERNAL_LOGS_DIR:-/app/shared/external}
+      PIPELINE_PROCESSED_LOGS_DIR: ${PIPELINE_PROCESSED_LOGS_DIR:-/app/shared/processed}
+      PIPELINE_COLLECTED_LOGS_FILE: ${PIPELINE_COLLECTED_LOGS_FILE:-/app/shared/processed/collected_logs.txt}
+      CHUNK_STATE_FILE: ${CHUNK_STATE_FILE_BACKEND:-/app/shared/external/chunk_logs_state.tsv}
+      OLLAMA_URL: ${OLLAMA_URL}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      GIGACHAT_API_KEY: ${GIGACHAT_API_KEY}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS}
+      LLM_TIMEOUT: ${LLM_TIMEOUT}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - app_logs:/app/logs
+      - external_logs:/app/shared/external
+      - processed_logs:/app/shared/processed
+      - chroma_data:/app/log_ai_agent/ai_agent_v2/chroma_db
+    networks:
+      - cyberlog-network
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: ${KAFKA_CONTAINER_NAME:-cyberlog-kafka}
+    user: "0:0"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+    networks:
+      - cyberlog-network
+    restart: unless-stopped
+
+  vector:
+    image: axstiz/wavescan-vector:latest
+    container_name: ${VECTOR_CONTAINER_NAME:-cyberlog-vector}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      VECTOR_CONFIG: /etc/vector/vector.toml
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-processed-logs-batches}
+      CHUNK_BATCH_SIZE: ${CHUNK_BATCH_SIZE:-250}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-20}
+      CHUNK_FLUSH_INTERVAL_SECONDS: ${CHUNK_FLUSH_INTERVAL_SECONDS:-300}
+      CHUNK_STATE_FILE: ${CHUNK_STATE_FILE_VECTOR:-/data/external/chunk_logs_state.tsv}
+    command: ["--config", "/etc/vector/vector.toml"]
+    volumes:
+      - vector_data:/var/lib/vector
+      - external_logs:/data/external
+      - processed_logs:/data/processed
+    networks:
+      - cyberlog-network
+    restart: unless-stopped
+
+  frontend:
+    image: axstiz/wavescan-frontend:latest
+    container_name: ${FRONTEND_CONTAINER_NAME:-cyberlog-frontend}
+    env_file: .env
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - cyberlog-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  app_logs:
+    driver: local
+  kafka_data:
+    driver: local
+    name: cyberlog_kafka_data
+  external_logs:
+    driver: local
+    name: ${PIPELINE_EXTERNAL_LOGS_VOLUME_NAME:-cyberlog_external_logs}
+  processed_logs:
+    driver: local
+    name: ${PIPELINE_PROCESSED_LOGS_VOLUME_NAME:-cyberlog_processed_logs}
+  chroma_data:
+    driver: local
+    name: cyberlog_chroma_data
+  vector_data:
+    driver: local
+    name: ${VECTOR_DATA_VOLUME_NAME:-cyberlog_vector_data}
+
+networks:
+  cyberlog-network:
+    driver: bridge

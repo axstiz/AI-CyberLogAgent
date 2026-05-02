@@ -2,7 +2,9 @@ import asyncio
 import json
 import logging
 import os
+import shlex
 import shutil
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -77,6 +79,13 @@ AI_AGENT_RULES_DIR = APP_DIR / "ai_agent_v2" / "rules"
 SIGMA_RULES_DIR = AI_AGENT_RULES_DIR / "sigma"
 YARA_RULES_DIR = AI_AGENT_RULES_DIR / "yara"
 YARA_RULE_FILE = YARA_RULES_DIR / "cyber_security_rules.yar"
+ENABLE_DOCKER_RULE_SYNC = os.getenv(
+    "ENABLE_DOCKER_RULE_SYNC", "true"
+).strip().lower() in {"1", "true", "yes", "on"}
+DOCKER_RULE_SYNC_CONTAINER = os.getenv("BACKEND_CONTAINER_NAME", "cyberlog-backend")
+DOCKER_RULES_ROOT = Path(
+    os.getenv("DOCKER_RULES_ROOT", "/app/log_ai_agent/ai_agent_v2/rules")
+)
 
 AGENT_ACTION_RECEIVE_LOGS = 1
 AGENT_ACTION_ANALYZE_LOGS = 2
@@ -903,6 +912,100 @@ async def _reload_detection_pipeline() -> None:
     await warmup_pipeline()
 
 
+def _sync_rule_change_to_docker_container(
+    file_path: Path,
+    *,
+    deleted: bool = False,
+) -> bool:
+    """Mirror updated rule file into running backend container when available.
+
+    This is useful when backend API runs outside Docker, but analysis runtime
+    uses a running backend container.
+    """
+    if not ENABLE_DOCKER_RULE_SYNC:
+        return False
+
+    # When backend already runs in a container, local writes are already in target FS.
+    if Path("/.dockerenv").exists():
+        return False
+
+    docker_bin = shutil.which("docker")
+    if docker_bin is None:
+        return False
+
+    try:
+        relative_path = file_path.resolve().relative_to(AI_AGENT_RULES_DIR.resolve())
+    except Exception:
+        logger.warning("Skip docker sync: file outside rules dir: %s", file_path)
+        return False
+
+    container_target = (DOCKER_RULES_ROOT / relative_path).as_posix()
+    container_parent = str(Path(container_target).parent).replace("\\", "/")
+
+    try:
+        subprocess.run(
+            [
+                docker_bin,
+                "exec",
+                DOCKER_RULE_SYNC_CONTAINER,
+                "sh",
+                "-lc",
+                f"mkdir -p {shlex.quote(container_parent)}",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
+        if deleted:
+            subprocess.run(
+                [
+                    docker_bin,
+                    "exec",
+                    DOCKER_RULE_SYNC_CONTAINER,
+                    "sh",
+                    "-lc",
+                    f"rm -f {shlex.quote(container_target)}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+        else:
+            subprocess.run(
+                [
+                    docker_bin,
+                    "cp",
+                    str(file_path),
+                    f"{DOCKER_RULE_SYNC_CONTAINER}:{container_target}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+
+        logger.info(
+            "Rule synced to container %s: %s",
+            DOCKER_RULE_SYNC_CONTAINER,
+            container_target,
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip()
+        logger.warning(
+            "Docker rule sync failed for '%s': %s",
+            file_path,
+            stderr or str(e),
+        )
+        return False
+    except Exception as e:
+        logger.warning("Docker rule sync error for '%s': %s", file_path, e)
+        return False
+
+
 @app.get("/api/config/sigma/files")
 async def list_sigma_rule_files():
     """Get list of Sigma rule files from rules directory."""
@@ -945,6 +1048,7 @@ async def create_sigma_rule_file(request: SigmaFileCreateRequest):
             "level: medium\n"
         )
         file_path.write_text(initial_content, encoding="utf-8")
+        _sync_rule_change_to_docker_container(file_path)
         await _reload_detection_pipeline()
         return {"success": True, "filename": file_path.name}
     except HTTPException:
@@ -986,6 +1090,7 @@ async def update_sigma_rule_file_content(
             raise HTTPException(status_code=404, detail="Файл не найден")
 
         file_path.write_text(request.content, encoding="utf-8")
+        _sync_rule_change_to_docker_container(file_path)
         await _reload_detection_pipeline()
         return {"success": True, "filename": file_path.name}
     except HTTPException:
@@ -1006,6 +1111,7 @@ async def delete_sigma_rule_file(filename: str):
             raise HTTPException(status_code=404, detail="Файл не найден")
 
         file_path.unlink()
+        _sync_rule_change_to_docker_container(file_path, deleted=True)
         await _reload_detection_pipeline()
         return {"success": True, "filename": file_path.name}
     except HTTPException:
@@ -1041,6 +1147,7 @@ async def update_yara_rule_file_content(request: RuleContentUpdateRequest):
     try:
         YARA_RULES_DIR.mkdir(parents=True, exist_ok=True)
         YARA_RULE_FILE.write_text(request.content, encoding="utf-8")
+        _sync_rule_change_to_docker_container(YARA_RULE_FILE)
         await _reload_detection_pipeline()
         return {"success": True, "filename": YARA_RULE_FILE.name}
     except Exception as e:

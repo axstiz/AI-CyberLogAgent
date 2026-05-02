@@ -507,6 +507,25 @@ watch([messages, isLoading, topAlignSpacerHeight], () => {
   nextTick(() => updateCustomScrollbar())
 }, { deep: true })
 
+const syncChatHistoryIfVisible = async () => {
+  if (route.path !== '/chat' || document.visibilityState !== 'visible') return
+
+  await loadChatHistory()
+  clearNotifications(false)
+  nextTick(() => updateCustomScrollbar())
+}
+
+watch(
+  [
+    () => appStore.chatUpdateVersion,
+    () => appStore.reportsUpdateVersion,
+  ],
+  async ([chatVersion, reportVersion], [prevChatVersion, prevReportVersion]) => {
+    if (chatVersion === prevChatVersion && reportVersion === prevReportVersion) return
+    await syncChatHistoryIfVisible()
+  }
+)
+
 watch(
   () => isLoading.value,
   async (loadingNow, loadingPrev) => {

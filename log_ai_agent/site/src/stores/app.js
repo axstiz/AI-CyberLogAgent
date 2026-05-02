@@ -23,6 +23,7 @@ export const useAppStore = defineStore('app', () => {
   const chatIsLogAnalysisInProgress = ref(false)
   const chatLogUploadAbortController = ref(null)
   const originalPageTitle = ref(document.title)
+  const chatUpdateVersion = ref(0)
   const reportsUpdateVersion = ref(0)
 
   // Инициализация: восстанавливаем сессию из localStorage
@@ -350,6 +351,13 @@ export const useAppStore = defineStore('app', () => {
     reportsUpdateVersion.value += 1
   }
 
+  /**
+   * Сигнализирует странице чата о новом сообщении от ассистента.
+   */
+  const notifyChatUpdated = (_payload = null) => {
+    chatUpdateVersion.value += 1
+  }
+
   return {
     isAuthenticated,
     currentUser,
@@ -365,6 +373,7 @@ export const useAppStore = defineStore('app', () => {
     chatIsLoading,
     chatIsLogAnalysisInProgress,
     chatLogUploadAbortController,
+    chatUpdateVersion,
     reportsUpdateVersion,
     login,
     refreshCurrentUser,
@@ -375,6 +384,7 @@ export const useAppStore = defineStore('app', () => {
     addUnreadChatMessage,
     clearUnreadChatMessages,
     addIncident,
+    notifyChatUpdated,
     notifyReportsUpdated,
   }
 })
