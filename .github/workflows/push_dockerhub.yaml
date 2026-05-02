@@ -45,8 +45,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-backend:${{ steps.version.outputs.new_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
 
       - name: Build and push wavescan-frontend
         uses: docker/build-push-action@v5
