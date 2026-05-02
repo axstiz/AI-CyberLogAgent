@@ -20,7 +20,17 @@ param(
 
     [int]$MaxLogs = 0,
 
+    [int]$MaxIncidents = 0,
+
+    [int]$MinIncidents = 0,
+
+    [switch]$NoIncidents,
+
     [string]$HostName = "target-node-01",
+
+    [string]$OutputDir,
+
+    [switch]$OutputRoot,
 
     [switch]$NoBuild,
 
@@ -53,6 +63,9 @@ Examples:
   .\run.ps1 start
   .\run.ps1 fixed T1059 60
   .\run.ps1 random -MinInterval 30 -MaxInterval 45 -Seed 123 -NoBuild
+  .\run.ps1 fixed T1059 5 -MaxLogs 250 -MaxIncidents 3
+  .\run.ps1 random -MaxLogs 250 -MinIncidents 3
+  .\run.ps1 -OutputRoot
   .\run.ps1 logs
   .\run.ps1 stop
 "@
@@ -127,8 +140,20 @@ $env:ATTACK_INTERVAL_MAX = [string]$MaxInterval
 $env:RANDOM_SEED = [string]$Seed
 $env:LOG_RATE = [string]$Rate
 $env:MAX_LOG_LINES = [string]$MaxLogs
-$env:RESTART_POLICY = if ($MaxLogs -gt 0) { "no" } else { "unless-stopped" }
+$env:MAX_INCIDENTS = [string]$MaxIncidents
+$env:MIN_INCIDENTS = [string]$MinIncidents
+$env:DISABLE_INCIDENTS = if ($NoIncidents) { "1" } else { "0" }
+$env:RESTART_POLICY = if ($MaxLogs -gt 0 -or $MaxIncidents -gt 0) { "no" } else { "unless-stopped" }
 $env:HOSTNAME_OVERRIDE = $HostName
+
+if ($OutputRoot) {
+    $env:LOG_OUTPUT_DIR = (Resolve-Path -Path (Join-Path $PSScriptRoot "..")).Path
+} elseif (-not [string]::IsNullOrWhiteSpace($OutputDir)) {
+    if (-not (Test-Path -Path $OutputDir)) {
+        New-Item -Path $OutputDir -ItemType Directory -Force | Out-Null
+    }
+    $env:LOG_OUTPUT_DIR = (Resolve-Path -Path $OutputDir).Path
+}
 
 if ($useDockerComposeV2) {
     if ($Down) {

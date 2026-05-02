@@ -27,7 +27,12 @@ Options:
   --seed <n>                    Random seed (default: 42)
   --rate <n>                    Log rate per second (default: 200)
   --max-logs <n>                Stop after N emitted log lines (0 = unlimited)
+  --max-incidents <n>           Stop after N incidents (0 = unlimited)
+  --min-incidents <n>           Ensure at least N incidents before stopping
+  --no-incidents                Disable incidents entirely
   --host <name>                 Hostname in logs (default: target-node-01)
+  --output-dir <path>           Bind-mount host folder for logs
+  --output-root                 Write logs to repo root folder
   --no-build                    Skip image rebuild
   --logs                        Follow logs only
   --down                        Stop and remove containers
@@ -38,6 +43,9 @@ Examples:
   ./run.sh fixed T1059 60
   ./run.sh --random --min 30 --max 45 --seed 123
   ./run.sh --logs
+  ./run.sh fixed T1059 5 --max-logs 250 --max-incidents 3
+  ./run.sh random --max-logs 250 --min-incidents 3
+  ./run.sh --output-root
   ./run.sh stop
 EOF
 }
@@ -50,10 +58,14 @@ ATTACK_INTERVAL_MAX="120"
 RANDOM_SEED="42"
 LOG_RATE="200"
 MAX_LOG_LINES="0"
+MAX_INCIDENTS="0"
+MIN_INCIDENTS="0"
+DISABLE_INCIDENTS="0"
 HOSTNAME_OVERRIDE="target-node-01"
 RESTART_POLICY="unless-stopped"
 ACTION="up"
 NO_BUILD="0"
+OUTPUT_DIR=""
 
 # Optional short command as first argument.
 if [[ $# -gt 0 ]]; then
@@ -141,10 +153,33 @@ while [[ $# -gt 0 ]]; do
       [[ -n "${MAX_LOG_LINES}" ]] || { echo "Error: --max-logs requires value"; exit 1; }
       shift 2
       ;;
+    --max-incidents)
+      MAX_INCIDENTS="${2:-}"
+      [[ -n "${MAX_INCIDENTS}" ]] || { echo "Error: --max-incidents requires value"; exit 1; }
+      shift 2
+      ;;
+    --min-incidents)
+      MIN_INCIDENTS="${2:-}"
+      [[ -n "${MIN_INCIDENTS}" ]] || { echo "Error: --min-incidents requires value"; exit 1; }
+      shift 2
+      ;;
+    --no-incidents)
+      DISABLE_INCIDENTS="1"
+      shift
+      ;;
     --host)
       HOSTNAME_OVERRIDE="${2:-}"
       [[ -n "${HOSTNAME_OVERRIDE}" ]] || { echo "Error: --host requires value"; exit 1; }
       shift 2
+      ;;
+    --output-dir)
+      OUTPUT_DIR="${2:-}"
+      [[ -n "${OUTPUT_DIR}" ]] || { echo "Error: --output-dir requires value"; exit 1; }
+      shift 2
+      ;;
+    --output-root)
+      OUTPUT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+      shift
       ;;
     --no-build)
       NO_BUILD="1"
@@ -203,14 +238,28 @@ if [[ "${NO_BUILD}" != "1" ]]; then
   cmd+=(--build)
 fi
 
-ATTACK_MODE="${ATTACK_MODE}" \
-FIXED_TECHNIQUE="${FIXED_TECHNIQUE}" \
-ATTACK_INTERVAL="${ATTACK_INTERVAL}" \
-ATTACK_INTERVAL_MIN="${ATTACK_INTERVAL_MIN}" \
-ATTACK_INTERVAL_MAX="${ATTACK_INTERVAL_MAX}" \
-RANDOM_SEED="${RANDOM_SEED}" \
-LOG_RATE="${LOG_RATE}" \
-MAX_LOG_LINES="${MAX_LOG_LINES}" \
-RESTART_POLICY="$([ "${MAX_LOG_LINES}" -gt 0 ] && echo "no" || echo "${RESTART_POLICY}")" \
-HOSTNAME_OVERRIDE="${HOSTNAME_OVERRIDE}" \
-"${cmd[@]}"
+restart_policy="${RESTART_POLICY}"
+if [[ "${MAX_LOG_LINES}" -gt 0 || "${MAX_INCIDENTS}" -gt 0 ]]; then
+  restart_policy="no"
+fi
+
+env_cmd=(
+  ATTACK_MODE="${ATTACK_MODE}"
+  FIXED_TECHNIQUE="${FIXED_TECHNIQUE}"
+  ATTACK_INTERVAL="${ATTACK_INTERVAL}"
+  ATTACK_INTERVAL_MIN="${ATTACK_INTERVAL_MIN}"
+  ATTACK_INTERVAL_MAX="${ATTACK_INTERVAL_MAX}"
+  RANDOM_SEED="${RANDOM_SEED}"
+  LOG_RATE="${LOG_RATE}"
+  MAX_LOG_LINES="${MAX_LOG_LINES}"
+  MAX_INCIDENTS="${MAX_INCIDENTS}"
+  MIN_INCIDENTS="${MIN_INCIDENTS}"
+  DISABLE_INCIDENTS="${DISABLE_INCIDENTS}"
+  RESTART_POLICY="${restart_policy}"
+  HOSTNAME_OVERRIDE="${HOSTNAME_OVERRIDE}"
+)
+if [[ -n "${OUTPUT_DIR}" ]]; then
+  env_cmd+=(LOG_OUTPUT_DIR="${OUTPUT_DIR}")
+fi
+
+"${env_cmd[@]}" "${cmd[@]}"

@@ -26,7 +26,7 @@ RUN set -eux; \
     rm -f /tmp/flog.tar.gz /tmp/flog
 
 COPY orchestrator.sh /orchestrator.sh
-RUN chmod +x /orchestrator.sh
+RUN sed -i 's/\r$//' /orchestrator.sh && chmod +x /orchestrator.sh
 
 VOLUME ["/var/log/golden"]
 

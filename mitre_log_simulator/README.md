@@ -12,7 +12,7 @@
 - Периодически инжектит безопасные симуляции техник MITRE ATT&CK (10 техник).
 - После каждой атаки выполняет cleanup и пишет статус в stdout.
 - Ведет golden-журнал на volume хоста в файле /var/log/golden/attack_timeline.log.
-- Ведет файл меток инцидентов с таймстампами в /var/log/golden/incident_markers.log.
+- Ведет единый append-only файл потока логов: /var/log/golden/simulator_stream.log.
 - Поддерживает детерминизм через RANDOM_SEED.
 
 ## Структура
@@ -36,8 +36,14 @@
 | LOG_RATE | 200 | Базовая интенсивность логов, записей/сек (фактически ±10%) |
 | FLOG_RPS | 5 | Вклад фонового flog в общий поток (для точного rate-бюджета) |
 | MAX_LOG_LINES | 0 | Остановить симулятор после N строк логов (0 = без лимита) |
+| MAX_INCIDENTS | 0 | Остановить симулятор после N инцидентов (0 = без лимита) |
+| MIN_INCIDENTS | 0 | Гарантировать минимум N инцидентов до остановки по логам |
+| DISABLE_INCIDENTS | 0 | Отключить инциденты полностью (1 = выключить) |
 | RANDOM_SEED | 42 | Seed для детерминированной последовательности |
 | HOSTNAME_OVERRIDE | target-node-01 | Имя узла в логах |
+
+Если одновременно заданы MAX_LOG_LINES и MAX_INCIDENTS, симулятор выдаёт ровно N строк и M инцидентов (без сервисных строк старта/остановки). В этом режиме интервалы атак игнорируются. Минимум: MAX_LOG_LINES >= MAX_INCIDENTS * 4.
+Если задан MIN_INCIDENTS и MAX_LOG_LINES, генератор может превысить MAX_LOG_LINES, чтобы добрать минимум инцидентов, и остановится сразу после этого.
 
 ## Поддерживаемые техники (безопасная симуляция)
 
@@ -82,6 +88,18 @@ Windows PowerShell:
 # короткий smoke-тест: 250 логов и автоматическое завершение
 ./run.sh fixed T1059 5 --max-logs 250
 
+# ограничить количество инцидентов
+./run.sh fixed T1059 5 --max-incidents 3
+
+# гарантировать минимум инцидентов
+./run.sh random --max-logs 250 --min-incidents 3
+
+# полностью отключить инциденты
+./run.sh --no-incidents
+
+# писать логи в корень репозитория
+./run.sh --output-root
+
 # посмотреть логи
 ./run.sh logs
 
@@ -101,6 +119,18 @@ Windows PowerShell:
 
 # короткий smoke-тест: 250 логов и автоматическое завершение
 .\run.ps1 fixed T1059 5 -MaxLogs 250
+
+# ограничить количество инцидентов
+.\run.ps1 fixed T1059 5 -MaxIncidents 3
+
+# гарантировать минимум инцидентов
+.\run.ps1 random -MaxLogs 250 -MinIncidents 3
+
+# полностью отключить инциденты
+.\run.ps1 -NoIncidents
+
+# писать логи в корень репозитория
+.\run.ps1 -OutputRoot
 
 # посмотреть логи
 .\run.ps1 logs
@@ -158,6 +188,12 @@ docker run --rm -e RANDOM_SEED=123 -v ./golden_logs:/var/log/golden my_image
 
 Файл: /var/log/golden/attack_timeline.log
 
+Потоковый лог:
+
+```text
+/var/log/golden/simulator_stream.log
+```
+
 Формат строки:
 
 ```text
@@ -169,25 +205,6 @@ TIMESTAMP|TECHNIQUE|START|END|CLEANUP_STATUS
 ```text
 2026-04-03T12:35:00Z|T1059|2026-04-03T12:34:59Z|2026-04-03T12:35:00Z|CLEANUP_OK
 ```
-
-## Incident markers log
-
-Файл: /var/log/golden/incident_markers.log
-
-Формат строки:
-
-```text
-TIMESTAMP|EVENT|TECHNIQUE|DETAILS
-```
-
-Пример:
-
-```text
-2026-04-03T12:34:59Z|TEST_START|T1059|Running technique
-2026-04-03T12:35:00Z|TEST_END|T1059|status=CLEANUP_OK
-```
-
-Этот файл нужен для прямого сравнения с результатами анализатора: видны точные таймстампы инцидентов в сгенерированном потоке.
 
 ## Healthcheck
 
@@ -215,12 +232,6 @@ docker logs -f mitre-log-simulator | grep "TEST_START\|TEST_END\|CLEANUP_"
 
 ```bash
 tail -f ./golden_logs/attack_timeline.log
-```
-
-### Проверка меток инцидентов
-
-```bash
-tail -f ./golden_logs/incident_markers.log
 ```
 
 ### Проверка health

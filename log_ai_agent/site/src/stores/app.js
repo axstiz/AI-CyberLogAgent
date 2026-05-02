@@ -11,13 +11,20 @@ export const useAppStore = defineStore('app', () => {
   const isAuthenticated = ref(false)
   const currentUser = ref(null)
   const token = ref(localStorage.getItem('auth_token') || null)
+  const isAdmin = computed(() => Boolean(currentUser.value?.isAdmin))
+  const authSynced = ref(false)
   
   // Состояние Sidebar
   const sidebarCollapsed = ref(false)
   
   // Состояние непрочитанных сообщений в чате
   const unreadChatMessages = ref(0)
+  const chatIsLoading = ref(false)
+  const chatIsLogAnalysisInProgress = ref(false)
+  const chatLogUploadAbortController = ref(null)
   const originalPageTitle = ref(document.title)
+  const chatUpdateVersion = ref(0)
+  const reportsUpdateVersion = ref(0)
 
   // Инициализация: восстанавливаем сессию из localStorage
   const initializeAuth = () => {
@@ -26,9 +33,14 @@ export const useAppStore = defineStore('app', () => {
     
     if (savedToken && savedUser) {
       try {
+        const parsedUser = JSON.parse(savedUser)
         token.value = savedToken
-        currentUser.value = JSON.parse(savedUser)
+        currentUser.value = {
+          ...parsedUser,
+          isAdmin: Boolean(parsedUser?.isAdmin),
+        }
         isAuthenticated.value = true
+        authSynced.value = false
       } catch (error) {
         console.error('Error restoring session:', error)
         logout()
@@ -83,12 +95,14 @@ export const useAppStore = defineStore('app', () => {
           id: data.user.user_id,
           username: data.user.login,
           email: `${data.user.login}@cyberagent.com`,
+          isAdmin: Boolean(data.user.is_admin),
         }
         token.value = data.token
         
         // Сохраняем токен и пользователя в localStorage для сессии
         localStorage.setItem('auth_token', data.token)
         localStorage.setItem('current_user', JSON.stringify(currentUser.value))
+        authSynced.value = true
         
         return { success: true }
       } else {
@@ -97,6 +111,38 @@ export const useAppStore = defineStore('app', () => {
     } catch (error) {
       console.error('Login error:', error)
       return { success: false, message: 'Введен неверный логин или пароль' }
+    }
+  }
+
+  const refreshCurrentUser = async () => {
+    if (!token.value) {
+      return false
+    }
+    if (authSynced.value) {
+      return true
+    }
+
+    try {
+      const { data } = await auth.me()
+      if (data?.success && data.user) {
+        currentUser.value = {
+          id: data.user.user_id,
+          username: data.user.login,
+          email: `${data.user.login}@cyberagent.com`,
+          isAdmin: Boolean(data.user.is_admin),
+        }
+        localStorage.setItem('current_user', JSON.stringify(currentUser.value))
+        isAuthenticated.value = true
+        authSynced.value = true
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Error refreshing current user:', error)
+      if (error?.response?.status === 401) {
+        await logout()
+      }
+      return false
     }
   }
 
@@ -112,6 +158,10 @@ export const useAppStore = defineStore('app', () => {
       isAuthenticated.value = false
       currentUser.value = null
       token.value = null
+      authSynced.value = false
+      chatIsLoading.value = false
+      chatIsLogAnalysisInProgress.value = false
+      chatLogUploadAbortController.value = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('current_user')
     }
@@ -260,7 +310,11 @@ export const useAppStore = defineStore('app', () => {
       statistics.value.suspiciousCount++
     }
     statistics.value.totalIncidents++
-    addNotification(`Новый инцидент: ${incident.title}`, 'warning')
+    if (incident.source === 'Manual Log Upload') {
+      addNotification('Отчет по запросу был сформирован', 'info')
+      return
+    }
+    addNotification('Найден новый инцидент!', 'warning')
   }
   
   /**
@@ -290,17 +344,39 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  /**
+   * Сигнализирует страницам отчетов о появлении нового отчета в реальном времени.
+   */
+  const notifyReportsUpdated = (_payload = null) => {
+    reportsUpdateVersion.value += 1
+  }
+
+  /**
+   * Сигнализирует странице чата о новом сообщении от ассистента.
+   */
+  const notifyChatUpdated = (_payload = null) => {
+    chatUpdateVersion.value += 1
+  }
+
   return {
     isAuthenticated,
     currentUser,
     token,
+    isAdmin,
+    authSynced,
     sidebarCollapsed,
     notifications,
     incidents,
     isLoadingIncidents,
     statistics,
     unreadChatMessages,
+    chatIsLoading,
+    chatIsLogAnalysisInProgress,
+    chatLogUploadAbortController,
+    chatUpdateVersion,
+    reportsUpdateVersion,
     login,
+    refreshCurrentUser,
     logout,
     addNotification,
     removeNotification,
@@ -308,5 +384,7 @@ export const useAppStore = defineStore('app', () => {
     addUnreadChatMessage,
     clearUnreadChatMessages,
     addIncident,
+    notifyChatUpdated,
+    notifyReportsUpdated,
   }
 })

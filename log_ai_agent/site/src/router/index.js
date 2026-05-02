@@ -41,6 +41,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/config',
+    name: 'Config',
+    component: () => import('@/pages/ConfigPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/chat',
   },
@@ -58,6 +64,10 @@ router.beforeEach(async (to, from, next) => {
   const appStore = useAppStore()
   const backendReady = await checkBackendReady()
 
+  if (appStore.isAuthenticated) {
+    await appStore.refreshCurrentUser()
+  }
+
   if (!backendReady && to.name !== 'AssistantLoading') {
     next({
       name: 'AssistantLoading',
@@ -73,6 +83,8 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta.requiresAuth && !appStore.isAuthenticated) {
     next('/login')
+  } else if (to.meta.requiresAdmin && !appStore.isAdmin) {
+    next('/chat')
   } else if (to.path === '/login' && appStore.isAuthenticated) {
     next('/')
   } else {

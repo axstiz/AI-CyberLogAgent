@@ -14,10 +14,13 @@ services:
       ATTACK_INTERVAL_MAX: ${ATTACK_INTERVAL_MAX:-120}
       LOG_RATE: ${LOG_RATE:-200}
       MAX_LOG_LINES: ${MAX_LOG_LINES:-0}
+      MAX_INCIDENTS: ${MAX_INCIDENTS:-0}
+      MIN_INCIDENTS: ${MIN_INCIDENTS:-0}
+      DISABLE_INCIDENTS: ${DISABLE_INCIDENTS:-0}
       RANDOM_SEED: ${RANDOM_SEED:-42}
       HOSTNAME_OVERRIDE: ${HOSTNAME_OVERRIDE:-target-node-01}
     volumes:
-      - shared_external_logs:/var/log/golden
+      - ${LOG_OUTPUT_DIR:-shared_external_logs}:/var/log/golden
 
 volumes:
   shared_external_logs:

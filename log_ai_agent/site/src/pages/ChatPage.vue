@@ -17,7 +17,10 @@
       >
         <div
           ref="chatContainer"
-          class="chat-scroll-container h-full w-full min-h-0 overflow-y-auto pt-8 pr-3"
+          :class="[
+            'chat-scroll-container h-full w-full min-h-0 overflow-y-auto pt-8 pr-3',
+            messages.length ? 'chat-scroll-fade-bottom' : ''
+          ]"
           :style="{ paddingBottom: `${topAlignSpacerHeight}px` }"
           @scroll="handleChatScroll"
         >
@@ -40,6 +43,18 @@
             </div>
 
             <div
+              v-else-if="msg.role === 'notice'"
+              :class="[
+                'px-1 py-1',
+                index === messages.length - 1 ? 'mb-12' : 'mb-4'
+              ]"
+            >
+              <p class="text-sm leading-relaxed break-words whitespace-pre-wrap text-[#7f8291]">
+                {{ msg.text }}
+              </p>
+            </div>
+
+            <div
               v-else
               :class="[
                 'p-4 rounded-xl transition-all duration-500',
@@ -58,7 +73,29 @@
                 class="markdown-content text-base leading-relaxed text-dark-200 text-left break-words"
                 v-html="renderMarkdown(msg.text)"
               ></div>
-              <p class="text-xs text-dark-500 mt-2 text-left">Wavescan assistant</p>
+              <div class="mt-2 inline-flex items-center gap-2 mb-7">
+                <p class="text-xs text-[#ABABBF] text-left">Wavescan assistant</p>
+                <button
+                  type="button"
+                  class="copy-message-btn"
+                  :title="copiedMessageIndex === index ? 'Скопировано' : 'Копировать сообщение'"
+                  :aria-label="copiedMessageIndex === index ? 'Сообщение скопировано' : 'Копировать сообщение ассистента'"
+                  @click="copyMessageText(msg.text, index)"
+                >
+                  <svg
+                    v-if="copiedMessageIndex === index"
+                    class="w-4 h-4"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    aria-hidden="true"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5l4 4 8-8" />
+                  </svg>
+                  <img v-else src="/copy_icon.svg" alt="copy" class="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -95,7 +132,7 @@
           messages.length ? 'translate-y-0 pt-2' : '-translate-y-[24vh]'
         ]"
       >
-        <div v-if="messages.length === 0" class="mb-1 text-center select-none">
+        <div v-if="isHistoryLoaded && messages.length === 0" class="mb-1 text-center select-none">
           <img
             src="/wavescan_chat_logo.svg"
             alt="wavescan agent"
@@ -173,7 +210,7 @@
                 ]"
                 title="Загрузить .log файл"
               >
-                <img src="/attachment_icon.svg" alt="attach" class="w-3.5 h-4" />
+                <img src="/attachment_icon.svg" alt="attach" class="w-3.5 h-4 attachment-icon attachment-ico" />
               </button>
 
               <div class="flex items-center gap-2">
@@ -316,20 +353,28 @@ const route = useRoute()
 const chatContainer = ref(null)
 const messageInput = ref(null)
 const inputMessage = ref('')
-const isLoading = ref(false)
-const isLogAnalysisInProgress = ref(false)
+const isLoading = computed({
+  get: () => appStore.chatIsLoading,
+  set: (value) => { appStore.chatIsLoading = value },
+})
+const isLogAnalysisInProgress = computed({
+  get: () => appStore.chatIsLogAnalysisInProgress,
+  set: (value) => { appStore.chatIsLogAnalysisInProgress = value },
+})
 const lastMessageTime = ref(0)
 const isRateLimited = ref(false)
 const isEmptyFile = ref(false)
 const showNewChatModal = ref(false)
+const isHistoryLoaded = ref(false)
 const topAlignSpacerHeight = ref(0)
 const showCustomScrollbar = ref(false)
 const scrollbarThumbHeight = ref(0)
 const scrollbarThumbTop = ref(0)
 const isDraggingScrollbar = ref(false)
 const scrollbarDragStartOffset = ref(0)
+const copiedMessageIndex = ref(null)
 let clearNotificationsTimer = null
-let logUploadAbortController = null
+let copyResetTimer = null
 
 // Константы ограничений
 const MAX_MESSAGE_LENGTH = 500
@@ -341,6 +386,7 @@ const MAX_SCROLLBAR_THUMB_HEIGHT = 160
 const SCROLLBAR_EDGE_GAP = 96
 
 const messages = ref([])
+const shouldSyncAfterBackgroundCompletion = ref(false)
 
 // Загрузка истории чата при монтировании
 onMounted(async () => {
@@ -349,9 +395,14 @@ onMounted(async () => {
   // Очищаем с задержкой при монтировании компонента
   clearNotifications(false)
   adjustTextareaHeight()
+
+  if (isLoading.value) {
+    shouldSyncAfterBackgroundCompletion.value = true
+  }
   
   // Загружаем историю чата из БД
   await loadChatHistory()
+  isHistoryLoaded.value = true
 })
 
 // Функция загрузки истории чата
@@ -370,7 +421,7 @@ const loadChatHistory = async () => {
     if (response.data && response.data.data && response.data.data.length > 0) {
       // Преобразуем сообщения из БД в формат компонента
       messages.value = response.data.data.map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'ai',  // 'assistant' или 'agent' -> 'ai'
+        role: msg.role === 'user' ? 'user' : (msg.role === 'notice' ? 'notice' : 'ai'),
         text: msg.content,
         isNew: false,
       }))
@@ -448,13 +499,42 @@ watch(() => route.path, (newPath) => {
   if (newPath === '/chat') {
     // Очищаем с задержкой, чтобы пользователь увидел выделенные сообщения
     clearNotifications(false)
-    nextTick(updateCustomScrollbar)
+    nextTick(() => updateCustomScrollbar())
   }
 }, { immediate: true })
 
 watch([messages, isLoading, topAlignSpacerHeight], () => {
-  nextTick(updateCustomScrollbar)
+  nextTick(() => updateCustomScrollbar())
 }, { deep: true })
+
+const syncChatHistoryIfVisible = async () => {
+  if (route.path !== '/chat' || document.visibilityState !== 'visible') return
+
+  await loadChatHistory()
+  clearNotifications(false)
+  nextTick(() => updateCustomScrollbar())
+}
+
+watch(
+  [
+    () => appStore.chatUpdateVersion,
+    () => appStore.reportsUpdateVersion,
+  ],
+  async ([chatVersion, reportVersion], [prevChatVersion, prevReportVersion]) => {
+    if (chatVersion === prevChatVersion && reportVersion === prevReportVersion) return
+    await syncChatHistoryIfVisible()
+  }
+)
+
+watch(
+  () => isLoading.value,
+  async (loadingNow, loadingPrev) => {
+    if (loadingPrev && !loadingNow && shouldSyncAfterBackgroundCompletion.value) {
+      await loadChatHistory()
+      shouldSyncAfterBackgroundCompletion.value = false
+    }
+  }
+)
 
 // Очистка при возвращении фокуса на вкладку
 const handleVisibilityChange = () => {
@@ -701,12 +781,54 @@ const trimBoundaryEmptyLines = (value) => {
     .replace(/(?:\n[\t ]*)+$/, '')
 }
 
+const pushNoticeMessage = (text) => {
+  messages.value.push({
+    role: 'notice',
+    text,
+    isNew: false,
+  })
+}
+
 const handleMessageInput = () => {
   const normalized = normalizeMessageText(inputMessage.value)
   if (normalized !== inputMessage.value) {
     inputMessage.value = normalized
   }
   adjustTextareaHeight()
+}
+
+const copyMessageText = async (text, index) => {
+  if (!text) {
+    return
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.setAttribute('readonly', '')
+      textarea.style.position = 'fixed'
+      textarea.style.left = '-9999px'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+
+    copiedMessageIndex.value = index
+    if (copyResetTimer) {
+      clearTimeout(copyResetTimer)
+    }
+    copyResetTimer = setTimeout(() => {
+      copiedMessageIndex.value = null
+      copyResetTimer = null
+    }, 1800)
+  } catch (error) {
+    console.error('Failed to copy message text:', error)
+    appStore.addNotification('Не удалось скопировать сообщение', 'error')
+  }
 }
 
 const handleShiftEnter = (event) => {
@@ -784,10 +906,6 @@ const sendMessage = async () => {
     
     console.log('📦 Full API Response:', response.data)
     
-    const isOnChatPage = route.path === '/chat'
-    const isTabVisible = document.visibilityState === 'visible'
-    const shouldNotify = !isOnChatPage || !isTabVisible
-    
     const aiResponse = response.data.agent_response
     const responseMode = response.data.mode || 'UNKNOWN'
     
@@ -800,15 +918,9 @@ const sendMessage = async () => {
     messages.value.push({
       role: 'ai',
       text: aiResponse,
-      isNew: shouldNotify, // Помечаем как новое, если пользователь не видит чат
+      isNew: false,
     })
     await reduceTopAlignSpacerByLastAssistantMessage()
-    
-    // Если пользователь не видит чат (другая страница или вкладка), увеличиваем счетчик и отправляем уведомление
-    if (shouldNotify) {
-      appStore.addUnreadChatMessage()
-      appStore.addNotification('Новый ответ от AI агента в чате', 'info', 5000, true) // playSound = true
-    }
     
   } catch (error) {
     console.error('Error sending message to AI:', error)
@@ -828,18 +940,28 @@ const sendMessage = async () => {
   }
 }
 
-const cancelLogAnalysis = () => {
-  if (!isLogAnalysisInProgress.value || !logUploadAbortController) return
-  logUploadAbortController.abort()
+const cancelLogAnalysis = async () => {
+  if (!isLogAnalysisInProgress.value || !appStore.chatLogUploadAbortController) return
+
+  const userId = appStore.currentUser?.id
+  if (userId) {
+    try {
+      await logs.cancelUpload(userId)
+    } catch (error) {
+      console.warn('Cancel upload request failed:', error)
+    }
+  }
+
+  appStore.chatLogUploadAbortController.abort()
 }
 
-const handleSendControlClick = () => {
+const handleSendControlClick = async () => {
   if (isLogAnalysisInProgress.value) {
-    cancelLogAnalysis()
+    await cancelLogAnalysis()
     return
   }
 
-  sendMessage()
+  await sendMessage()
 }
 
 const selectQuickQuestion = (question) => {
@@ -867,11 +989,8 @@ const handleFileUpload = async (event) => {
   // Проверяем расширение файла
   if (!file.name.endsWith('.log')) {
     const errorMsg = '❌ Ошибка: Можно загружать только файлы с расширением .log'
-    messages.value.push({
-      role: 'user',
-      text: errorMsg,
-    })
-    await saveChatMessage('user', errorMsg)
+    pushNoticeMessage(errorMsg)
+    await saveChatMessage('notice', errorMsg)
     scrollToBottom()
     event.target.value = '' // Сбрасываем input
     return
@@ -892,12 +1011,12 @@ const handleFileUpload = async (event) => {
   // Устанавливаем состояние загрузки
   isLoading.value = true
   isLogAnalysisInProgress.value = true
-  logUploadAbortController = new AbortController()
+  appStore.chatLogUploadAbortController = new AbortController()
   
   try {
     // Отправляем файл на сервер для анализа
     const response = await logs.upload(userId, file, {
-      signal: logUploadAbortController.signal,
+      signal: appStore.chatLogUploadAbortController.signal,
     })
     
     if (response.data.success) {
@@ -913,11 +1032,6 @@ const handleFileUpload = async (event) => {
       
       // Сохраняем ответ в БД
       await saveChatMessage('agent', analysisMsg)
-      
-      appStore.addNotification(
-        `Файл ${file.name} успешно проанализирован`,
-        'success'
-      )
     } else {
       throw new Error(response.data.message || 'Ошибка при анализе файла')
     }
@@ -926,38 +1040,43 @@ const handleFileUpload = async (event) => {
     if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
       const canceledMsg = 'Анализ лога отменен пользователем.'
 
-      messages.value.push({
-        role: 'ai',
-        text: canceledMsg,
-        isNew: false,
-      })
+      pushNoticeMessage(canceledMsg)
 
       await reduceTopAlignSpacerByLastAssistantMessage()
+      await saveChatMessage('notice', canceledMsg)
 
-      await saveChatMessage('agent', canceledMsg)
+      appStore.addNotification('Анализ лога отменен', 'info')
+      return
+    }
+
+    const responseStatus = error?.response?.status
+    const responseDetail = String(error?.response?.data?.detail || '')
+    if (responseStatus === 499 || responseDetail.toLowerCase().includes('отменен')) {
+      const canceledMsg = 'Анализ лога отменен пользователем.'
+
+      pushNoticeMessage(canceledMsg)
+
+      await reduceTopAlignSpacerByLastAssistantMessage()
+      await saveChatMessage('notice', canceledMsg)
+
       appStore.addNotification('Анализ лога отменен', 'info')
       return
     }
 
     console.error('Error uploading log file:', error)
     
-    const errorMsg = `❌ **Ошибка при анализе файла**
+    const errorMsg = `❌ Ошибка при анализе файла
 
 ${error.response?.data?.detail || error.message || 'Неизвестная ошибка'}`
-    
-    messages.value.push({
-      role: 'ai',
-      text: errorMsg,
-      isNew: false,
-    })
+
+    pushNoticeMessage(errorMsg)
 
     await reduceTopAlignSpacerByLastAssistantMessage()
-    
-    await saveChatMessage('agent', errorMsg)
-    
+    await saveChatMessage('notice', errorMsg)
+
     appStore.addNotification('Ошибка при анализе файла логов', 'error')
   } finally {
-    logUploadAbortController = null
+    appStore.chatLogUploadAbortController = null
     isLogAnalysisInProgress.value = false
     isLoading.value = false
     event.target.value = '' // Сбрасываем input
@@ -966,8 +1085,9 @@ ${error.response?.data?.detail || error.message || 'Неизвестная ош�
 }
 
 onUnmounted(() => {
-  if (isLogAnalysisInProgress.value && logUploadAbortController) {
-    logUploadAbortController.abort()
+  if (copyResetTimer) {
+    clearTimeout(copyResetTimer)
+    copyResetTimer = null
   }
 })
 
@@ -1017,6 +1137,25 @@ const confirmNewChat = async () => {
   width: 0;
   height: 0;
   display: none;
+}
+
+.chat-scroll-fade-bottom {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 calc(100% - 104px),
+    rgba(0, 0, 0, 0.82) calc(100% - 76px),
+    rgba(0, 0, 0, 0.38) calc(100% - 40px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 calc(100% - 104px),
+    rgba(0, 0, 0, 0.82) calc(100% - 76px),
+    rgba(0, 0, 0, 0.38) calc(100% - 40px),
+    transparent 100%
+  );
 }
 
 .chat-scrollbar-track {
@@ -1085,6 +1224,39 @@ const confirmNewChat = async () => {
   border-color: #3c3c3c;
   color: #8f94a3;
   transform: none;
+}
+
+.attachment-icon,
+.attachment-ico {
+  filter: brightness(0.66);
+  transition: filter 0.2s ease;
+}
+
+button:hover .attachment-icon,
+button:hover .attachment-ico {
+  filter: brightness(0.80);
+}
+
+.copy-message-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  color: #b5bac7;
+  transition: all 0.2s ease;
+}
+
+.copy-message-btn:hover {
+  border-color: #6878ff;
+  color: #e6e9ff;
+  background: #2c3140;
+}
+
+.copy-message-btn:active {
+  transform: translateY(1px);
 }
 
 /* Стили для markdown контента */
