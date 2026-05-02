@@ -34,51 +34,51 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Wavescan-backend
+      - name: Build and push wavescan-backend
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./log_ai_agent/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-backend:${{ steps.version.outputs.new_tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-backend:${{ steps.version.outputs.new_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push Wavescan-frontend
+      - name: Build and push wavescan-frontend
         uses: docker/build-push-action@v5
         with:
           context: ./log_ai_agent/site
           file: ./log_ai_agent/site/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-frontend:${{ steps.version.outputs.new_tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-frontend:${{ steps.version.outputs.new_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push Wavescan-vector
+      - name: Build and push wavescan-vector
         uses: docker/build-push-action@v5
         with:
           context: ./log_ai_agent/vector
           file: ./log_ai_agent/vector/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-vector:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-vector:${{ steps.version.outputs.new_tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-vector:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-vector:${{ steps.version.outputs.new_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push Wavescan-postgres
+      - name: Build and push wavescan-postgres
         uses: docker/build-push-action@v5
         with:
           context: ./log_ai_agent
           file: ./log_ai_agent/postgres/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-postgres:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/Wavescan-postgres:${{ steps.version.outputs.new_tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-postgres:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/wavescan-postgres:${{ steps.version.outputs.new_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
