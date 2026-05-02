@@ -82,10 +82,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Push new Git tag
+      - name: Push new Git tag via API
         if: success()
+        env:
+          TAG: v${{ steps.version.outputs.new_tag }}
+          SHA: ${{ github.sha }}
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git tag "v${{ steps.version.outputs.new_tag }}"
-          git push origin "v${{ steps.version.outputs.new_tag }}"
+          gh api repos/${{ github.repository }}/git/refs \
+            -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -d '{"ref": "refs/tags/${{ env.TAG }}", "sha": "${{ env.SHA }}"}'
