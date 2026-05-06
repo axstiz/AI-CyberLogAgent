@@ -1,7 +1,5 @@
 ![Wavescan](./log_ai_agent/site/public/wavescan_logo.svg)
 
-*🌊* [![GitHub release](https://shields.io)](https://github.com/Mitoshi-Team/AI-CyberLogAgent/releases/tag/v13.0.4)
-
 # Wavescan
 ## Описание
 
@@ -87,89 +85,39 @@ flowchart TD
 6. **Сохранение** — отчёт и метаданные сохраняются в PostgreSQL
 7. **Уведомление** — пользователи получают оповещение о новом инциденте
 
+## Требования
+
+- Docker
+- Ollama с LLM (любая модель, например llama3.2:latest)
+- 8+ GB RAM
+
+
 ## Начало работы
 
-Клонируем репозиторий
+1. Находим последний релиз по [ссылке](https://github.com/Mitoshi-Team/AI-CyberLogAgent/releases) и скачиваем архив с файлами из Assets
 
-```bash
-git clone https://gitverse.ru/mitoshi_team/AI-CyberLogAgent
-cd AI-CyberLogAgent
-```
+2. Распаковываем архив и переходим в папку
 
-### 1. Подготовка модели эмбедингов (для локальной разработки)
-
-Для работы RAG (MITRE ATT&CK) нужна эмбединговая модель `intfloat/multilingual-e5-base` (~1.1 GB).
-
-**Вариант А: Запуск скрипта (рекомендуется)**
-
-```bash
-# Из корня репозитория
-download_embedding_model.bat        # Windows
-```
-
-Скрипт автоматически:
-- Проверит HF cache (`~/.cache/huggingface/`) — если модель уже скачана, скопирует оттуда
-- Если нет в cache — скачает с HuggingFace (~1-3 минуты)
-
-**Вариант Б: Ручная установка**
-
-```bash
-uv run huggingface-cli download intfloat/multilingual-e5-base \
-    --local-dir log_ai_agent/ai_agent_v2/embedding/models/multilingual-e5-base
-```
-
-**Примечание:**
-- Если HuggingFace возвращает `429 Too Many Requests` — подождите 5-15 минут и попробуйте снова
-- Модель сохраняется локально и при повторных запусках скачивание не потребуется
-- Модель работает в **offline режиме** — никогда не обращается к сети
-
-**Без модели?** Pipeline запустится без RAG (без MITRE ATT&CK контекста). Основной AI-анализ продолжит работать.
-
----
-
-### Инициализация MITRE ATT&CK
-
-При первом запуске пайплайна:
-
-1. Проверяется существующая ChromaDB (`chroma_db/`)
-2. Если пустая — ищется локальный файл `mitre_data/enterprise-attack.json`
-3. Если не найден — автоматически скачивается с GitHub:
-   - URL: `https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json`
-   - Сохраняется в `log_ai_agent/ai_agent_v2/mitre_data/enterprise-attack.json`
-4. Из STIX JSON извлекаются техники (около 700+ техник)
-5. Техники загружаются в ChromaDB с эмбедингами
-
----
-
-### 2. Развёртывание
-
-1. Создаем файл `.env` в папке `log_ai_agent` на основе `.env.example`
-
-```bash
-cd log_ai_agent
-cp .env.example .env
-```
+3. Переименовываем `.env.example` в `.env`
 
 **Обязательно отредактируйте следующие переменные**:
 - `OLLAMA_URL` и `OLLAMA_MODEL` - ваша локальная модель Ollama
 - `POSTGRES_PASSWORD` - пароль для базы данных
 - `PASSWORD_SALT` - соль для хэширования паролей
+
+*Опционально можно отредактировать:*
+- `VITE_SBER_SPEECH_API_KEY` - ключ от SberSpeech (для активации голосового ввода)
 - `CLI_TZ_OFFSET_HOURS` - ваш часовой пояс
 
-*Остальное редактировать необязательно*
-
-2. Запускаем Docker
+4. Запускаем Docker
 
 ```bash
-docker compose up --build -d
+docker compose up -d
 ```
 
-При первом запуске:
-- Скачивается эмбединговая модель `intfloat/multilingual-e5-base` (~1.1 GB) в Docker volume
-- Скачивается MITRE ATT&CK STIX JSON с GitHub и сохраняется локально
-- Данные сохраняются в Docker volumes
+*Образы сами подтянутся с Docker Hub*
 
-3. Переходим на сайт (порт указывается в `.env`)
+5. Переходим на сайт (порт указывается в `.env`, по умолчанию - `3000`)
 
 ```bash
 http://localhost:{FRONTEND_PORT}/
@@ -182,11 +130,6 @@ http://localhost:{FRONTEND_PORT}/
 ```bash
 docker compose down
 ```
-
-**Примечание:**
-- Модель эмбедингов и ChromaDB сохраняются в Docker volumes (`embedding_models`, `chroma_data`)
-- MITRE STIX JSON сохраняется в volume `chroma_data` (директория `mitre_data/`)
-- При `docker compose restart` скачивание не потребуется. При `docker compose down -v` — данные удаляются.
 
 ### Регистрация пользователя
 
@@ -212,11 +155,11 @@ set_admin <login> off
 
 Раздел **«Конфиг»** в веб-интерфейсе доступен только пользователям с `is_admin = true`.
 
-### Подключение внешнего источника логов (пример: mitre_log_simulator)
+### Подключение внешнего источника логов
 
 Wavescan принимает внешние логи через общий Docker-том (файлы `.log`/`.txt`) или через Push API. Для потоковых источников проще всего писать в общий том — Vector автоматически подхватит файлы из него.
 
-1. В `log_ai_agent/.env` проверьте параметры общего тома и пути:
+1. В `.env` проверьте параметры общего тома и пути:
 
 ```bash
 PIPELINE_EXTERNAL_LOGS_VOLUME_NAME=cyberlog_external_logs
@@ -224,26 +167,7 @@ PIPELINE_EXTERNAL_LOGS_DIR=/app/shared/external
 PIPELINE_EXTERNAL_APPEND_FILE=/app/shared/external/external_stream.log
 ```
 
-2. В `mitre_log_simulator` используйте тот же том (по умолчанию уже совпадает):
-
-```bash
-# mitre_log_simulator/.env (необязательно, можно через env)
-SHARED_EXTERNAL_LOGS_VOLUME_NAME=cyberlog_external_logs
-```
-
-Запуск:
-
-```bash
-./run.sh     # Linux/macOS
-```
-
-```powershell
-.\run.ps1    # Windows
-```
-
-Симулятор пишет поток в `/var/log/golden/simulator_stream.log` — этот файл попадает в общий том и автоматически обрабатывается пайплайном.
-
-3. В своей программе:
+2. В своей программе:
 - смонтируйте тот же Docker-том (например, в `/var/log/golden` или `/data/external`)
 - пишите логи в `.log` или `.txt` (append-only), чтобы Vector прочитал их из общего тома
 
@@ -288,8 +212,9 @@ AI-CyberLogAgent/
 ├── uv.lock                           # Зафиксированные зависимости
 ├── .dockerignore                     # Исключения для Docker
 ├── .gitignore                        # Исключения для Git
-├── FUNCTIONAL_SPECIFICATION.md       # Функциональные требования
 ├── README.md                         # Документация
+├── mitre_log_simulator/              # Симулятор логов MITRE
+├── quick_start/                      # Быстрый запуск (compose + env)
 │
 └── log_ai_agent/                     # Основной проект
     ├── config/                       # Конфигурация CLI
@@ -314,8 +239,7 @@ AI-CyberLogAgent/
     │   │   ├── prefilter.py        # Предобработка логов
     │   │   └── providers/          # LLM провайдеры
     │   │       ├── base.py          # Базовый класс
-    │   │       ├── ollama.py      # Ollama провайдер
-    │   │       └── gigachat.py     # GigaChat провайдер
+    │   │       └── ollama.py      # Ollama провайдер
     │   ├── engines/                # Сигнатурные движки
     │   │   ├── yara_engine.py    # YARA сканер
     │   │   └── sigma_engine.py   # Sigma сканер
@@ -362,13 +286,23 @@ AI-CyberLogAgent/
     │   └── lua/           # Lua-скрипты
     │
     ├── site/                 # Vue.js фронтенд
+    │   ├── public/           # Статические ресурсы
+    │   ├── src/              # Исходники фронтенда
+    │   ├── dist/             # Сборка фронтенда (генерируется)
+    │   ├── Dockerfile        # Сборка фронтенда
+    │   ├── nginx.conf        # Конфигурация Nginx
+    │   └── package.json      # Зависимости фронтенда
     ├── .env                 # Конфигурация (не в Git)
     ├── .env.example         # Пример конфигурации
     ├── app.py              # FastAPI приложение
     ├── docker-compose.yml  # Оркестрация контейнеров
     ├── Dockerfile         # Сборка backend
     ├── docker-entrypoint.sh # Скрипт запуска
-└── init-db.sql        # Инициализация БД
+    ├── init-db.sql        # Инициализация БД
+    ├── postgres/          # Контейнер PostgreSQL
+    └── vector/            # Vector (сбор логов)
+        ├── vector.toml    # Конфигурация Vector
+        └── lua/           # Lua-скрипты
 ```
 
 ## Схема БД

@@ -27,9 +27,11 @@ class YaraEngine:
             logger.warning(f"YARA rules path does not exist: {self.rules_path}")
             return
 
-        yar_files = list(self.rules_path.glob("*.yar"))
+        yar_files = list(self.rules_path.glob("*.yar")) + list(
+            self.rules_path.glob("*.yara")
+        )
         if not yar_files:
-            logger.warning(f"No .yar files found in {self.rules_path}")
+            logger.warning(f"No .yar or .yara files found in {self.rules_path}")
             return
 
         try:
@@ -52,9 +54,11 @@ class YaraEngine:
         """Return the number of loaded rule files."""
         if self._rules is None:
             return 0
-        yar_files = (
-            list(self.rules_path.glob("*.yar")) if self.rules_path.exists() else []
-        )
+        yar_files = []
+        if self.rules_path.exists():
+            yar_files = list(self.rules_path.glob("*.yar")) + list(
+                self.rules_path.glob("*.yara")
+            )
         return len(yar_files)
 
     def scan(self, parsed_logs: list[dict]) -> list[dict[str, Any]]:

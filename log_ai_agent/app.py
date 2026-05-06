@@ -825,6 +825,10 @@ class SigmaFileCreateRequest(BaseModel):
     filename: str
 
 
+class YaraFileCreateRequest(BaseModel):
+    filename: str
+
+
 @app.get("/")
 async def root():
     """Главная страница API"""
@@ -1084,6 +1088,25 @@ def _resolve_sigma_file_path(filename: str) -> Path:
     return (SIGMA_RULES_DIR / normalized_name).resolve()
 
 
+def _resolve_yara_file_path(filename: str) -> Path:
+    """Validate Yara filename and return normalized file path."""
+    if not filename:
+        raise HTTPException(status_code=400, detail="Имя файла обязательно")
+
+    normalized_name = Path(filename).name
+    if normalized_name != filename:
+        raise HTTPException(status_code=400, detail="Некорректное имя файла")
+
+    suffix = Path(normalized_name).suffix.lower()
+    if suffix not in {".yar", ".yara"}:
+        raise HTTPException(status_code=400, detail="Допустимы только .yar или .yara")
+
+    if any(char in normalized_name for char in ("\\", "/", ":")):
+        raise HTTPException(status_code=400, detail="Некорректное имя файла")
+
+    return (YARA_RULES_DIR / normalized_name).resolve()
+
+
 async def _reload_detection_pipeline() -> None:
     """Reload AI pipeline to pick up updated YARA/Sigma rules."""
     await close_pipeline()
@@ -1299,6 +1322,114 @@ async def delete_sigma_rule_file(filename: str):
         raise HTTPException(
             status_code=500, detail="Ошибка удаления файла Sigma правила"
         )
+
+
+@app.get("/api/config/yara/files")
+async def list_yara_rule_files():
+    """Get list of Yara rule files from rules directory."""
+    try:
+        YARA_RULES_DIR.mkdir(parents=True, exist_ok=True)
+        files = sorted(
+            file.name
+            for file in YARA_RULES_DIR.iterdir()
+            if file.is_file() and file.suffix.lower() in {".yar", ".yara"}
+        )
+        return {"files": files}
+    except Exception as e:
+        logger.error(f"Error listing Yara files: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка чтения каталога Yara правил")
+
+
+@app.post("/api/config/yara/files")
+async def create_yara_rule_file(request: YaraFileCreateRequest):
+    """Create empty Yara rule file."""
+    try:
+        YARA_RULES_DIR.mkdir(parents=True, exist_ok=True)
+        file_path = _resolve_yara_file_path(request.filename)
+
+        if file_path.exists():
+            raise HTTPException(status_code=409, detail="Файл уже существует")
+
+        initial_content = (
+            "rule NewYaraRule\n"
+            "{\n"
+            "  meta:\n"
+            "    description = \"\"\n"
+            "    severity = \"medium\"\n"
+            "  strings:\n"
+            "    $s1 = \"example\"\n"
+            "  condition:\n"
+            "    $s1\n"
+            "}\n"
+        )
+        file_path.write_text(initial_content, encoding="utf-8")
+        _sync_rule_change_to_docker_container(file_path)
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": file_path.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating Yara file: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка создания файла Yara правила")
+
+
+@app.get("/api/config/yara/files/{filename}")
+async def get_yara_rule_file_content_multi(filename: str):
+    """Get Yara rule file content."""
+    try:
+        file_path = _resolve_yara_file_path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+
+        return {
+            "filename": file_path.name,
+            "content": file_path.read_text(encoding="utf-8"),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading Yara file '{filename}': {e}")
+        raise HTTPException(status_code=500, detail="Ошибка чтения файла Yara правила")
+
+
+@app.put("/api/config/yara/files/{filename}")
+async def update_yara_rule_file_content_multi(
+    filename: str, request: RuleContentUpdateRequest
+):
+    """Update Yara rule file content and reload detection pipeline."""
+    try:
+        file_path = _resolve_yara_file_path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+
+        file_path.write_text(request.content, encoding="utf-8")
+        _sync_rule_change_to_docker_container(file_path)
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": file_path.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating Yara file '{filename}': {e}")
+        raise HTTPException(status_code=500, detail="Ошибка сохранения файла Yara правила")
+
+
+@app.delete("/api/config/yara/files/{filename}")
+async def delete_yara_rule_file(filename: str):
+    """Delete Yara rule file and reload detection pipeline."""
+    try:
+        file_path = _resolve_yara_file_path(filename)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+
+        file_path.unlink()
+        _sync_rule_change_to_docker_container(file_path, deleted=True)
+        await _reload_detection_pipeline()
+        return {"success": True, "filename": file_path.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting Yara file '{filename}': {e}")
+        raise HTTPException(status_code=500, detail="Ошибка удаления файла Yara правила")
 
 
 @app.get("/api/config/yara")
@@ -1705,18 +1836,18 @@ async def get_chat_messages(user_id: int, limit: int = 50):
 
 @app.delete("/api/chat/messages")
 async def clear_chat_messages(user_id: int):
-    """Очистка всех сообщений чата пользователя и контекста GigaChat агента"""
+    """Очистка всех сообщений чата пользователя и контекста AI агента"""
     try:
         # Используем специальную функцию для очистки контекста
         deleted_count = await clear_user_context(user_id, DATABASE_URL)
 
         logger.info(
-            f"Chat cleared for user {user_id}: {deleted_count} messages deleted, GigaChat context reset"
+            f"Chat cleared for user {user_id}: {deleted_count} messages deleted, AI context reset"
         )
 
         return {
             "success": True,
-            "message": "Чат и контекст GigaChat очищены",
+            "message": "Чат и контекст AI очищены",
             "deleted_count": deleted_count,
         }
     except Exception as e:
@@ -1758,7 +1889,7 @@ async def send_chat_message(request: ChatSendRequest):
     Процесс:
     1. Сохраняет сообщение пользователя в БД с ролью 'user'
     2. Получает последние 20 сообщений для контекста
-    3. Отправляет в GigaChat для получения ответа
+    3. Отправляет в LLM для получения ответа
     4. Сохраняет ответ в БД с ролью 'agent'
     5. Возвращает ответ агента
     """
@@ -1776,7 +1907,7 @@ async def send_chat_message(request: ChatSendRequest):
                 "Отправка сообщения в чат AI-агента",
             )
 
-        # Обрабатываем сообщение через GigaChat
+        # Обрабатываем сообщение через LLM
         result = await process_chat_message(
             user_id=request.user_id,
             user_message=request.message,
@@ -1872,7 +2003,7 @@ async def upload_log_file(
     1. Проверка формата файла (.log)
     2. Классический анализ логов
     3. Сохранение в таблицу Logs
-    4. Анализ через GigaChat с учетом ThreatTypes и SeverityLevels
+    4. Анализ через LLM с учетом ThreatTypes и SeverityLevels
     5. Создание отчета в таблице Reports
     6. Возврат результатов пользователю
 
@@ -2047,7 +2178,7 @@ async def upload_log_file(
                 "success": True,
                 "log_id": log_id,
                 "report_id": report_id,
-                "gigachat_analysis": analysis_result["description"],
+                "ai_analysis": analysis_result["description"],
             }
 
             # Добавляем метаданные v2 если доступны
