@@ -149,8 +149,13 @@ export const configRules = {
     apiClient.put(`/config/sigma/files/${encodeURIComponent(filename)}`, { content }),
   deleteSigmaFile: (filename) =>
     apiClient.delete(`/config/sigma/files/${encodeURIComponent(filename)}`),
-  getYaraFile: () => apiClient.get('/config/yara'),
-  saveYaraFile: (content) => apiClient.put('/config/yara', { content }),
+  listYaraFiles: () => apiClient.get('/config/yara/files'),
+  createYaraFile: (filename) => apiClient.post('/config/yara/files', { filename }),
+  getYaraFile: (filename) => apiClient.get(`/config/yara/files/${encodeURIComponent(filename)}`),
+  saveYaraFile: (filename, content) =>
+    apiClient.put(`/config/yara/files/${encodeURIComponent(filename)}`, { content }),
+  deleteYaraFile: (filename) =>
+    apiClient.delete(`/config/yara/files/${encodeURIComponent(filename)}`),
 }
 
 export default apiClient

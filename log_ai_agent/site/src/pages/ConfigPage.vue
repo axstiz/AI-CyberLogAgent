@@ -75,19 +75,65 @@
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-xl font-bold text-white">Yara правила</h2>
           <button
-            @click="saveYaraFile"
-            :disabled="yaraSaving"
-            class="w-9 h-9 rounded-lg bg-[#252525] hover:bg-[#2f2f2f] border border-[#2d313d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            title="Сохранить Yara файл"
+            @click="createYaraFile"
+            class="w-9 h-9 rounded-lg bg-[#252525] hover:bg-[#2f2f2f] border border-[#2d313d] transition-colors flex items-center justify-center"
+            title="Добавить файл Yara"
           >
-            <img src="/save_icon.svg" alt="save" class="w-4 h-4" />
+            <img src="/plus_icon.svg" alt="add" class="w-4 h-4" />
           </button>
         </div>
-        <textarea
-          v-model="yaraEditorContent"
-          class="w-full h-[420px] resize-none rounded-lg border border-[#2d313d] bg-[#1A1A1A] p-3 text-[#d6dceb] font-mono text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#7971F0] focus:border-transparent"
-          spellcheck="false"
-        />
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div class="rounded-lg border border-[#2d313d] bg-[#242424] p-3">
+            <p class="text-sm font-medium text-[#949daf] mb-3">Каталог файлов</p>
+            <div class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+              <button
+                v-for="fileName in yaraFiles"
+                :key="fileName"
+                @click="selectYaraFile(fileName)"
+                class="w-full text-left px-3 py-2 rounded-lg border transition-colors"
+                :class="selectedYaraFile === fileName
+                  ? 'bg-[#2f2f2f] border-[#4a5070] text-white'
+                  : 'bg-[#252525] border-[#2d313d] text-[#c6cde0] hover:bg-[#2f2f2f]'"
+              >
+                {{ fileName }}
+              </button>
+              <p v-if="!yaraFiles.length" class="text-sm text-[#7f8799]">Файлы не найдены</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-[#2d313d] bg-[#242424] p-3">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-medium text-[#949daf]">
+                Редактор: <span class="text-[#d8deec]">{{ selectedYaraFile || '—' }}</span>
+              </p>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="deleteYaraFile"
+                  :disabled="!selectedYaraFile || yaraSaving || yaraDeleting"
+                  class="w-9 h-9 rounded-lg bg-[#252525] hover:bg-[#2f2f2f] border border-[#2d313d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  title="Удалить Yara файл"
+                >
+                  <img src="/trash_icon.svg" alt="delete" class="w-4 h-4" />
+                </button>
+                <button
+                  @click="saveYaraFile"
+                  :disabled="!selectedYaraFile || yaraSaving || yaraDeleting"
+                  class="w-9 h-9 rounded-lg bg-[#252525] hover:bg-[#2f2f2f] border border-[#2d313d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  title="Сохранить Yara файл"
+                >
+                  <img src="/save_icon.svg" alt="save" class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <textarea
+              v-model="yaraEditorContent"
+              class="w-full h-[420px] resize-none rounded-lg border border-[#2d313d] bg-[#1A1A1A] p-3 text-[#d6dceb] font-mono text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#7971F0] focus:border-transparent"
+              spellcheck="false"
+              placeholder="Выберите файл Yara для редактирования"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -106,8 +152,11 @@ const sigmaEditorContent = ref('')
 const sigmaSaving = ref(false)
 const sigmaDeleting = ref(false)
 
+const yaraFiles = ref([])
+const selectedYaraFile = ref('')
 const yaraEditorContent = ref('')
 const yaraSaving = ref(false)
+const yaraDeleting = ref(false)
 
 const loadSigmaFiles = async () => {
   try {
@@ -208,9 +257,23 @@ const deleteSigmaFile = async () => {
   }
 }
 
-const loadYaraFile = async () => {
+const loadYaraFiles = async () => {
   try {
-    const response = await configRules.getYaraFile()
+    const response = await configRules.listYaraFiles()
+    yaraFiles.value = response.data.files || []
+    if (!selectedYaraFile.value && yaraFiles.value.length > 0) {
+      await selectYaraFile(yaraFiles.value[0])
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки Yara файлов:', error)
+    appStore.addNotification('Ошибка загрузки Yara файлов', 'error')
+  }
+}
+
+const selectYaraFile = async (fileName) => {
+  selectedYaraFile.value = fileName
+  try {
+    const response = await configRules.getYaraFile(fileName)
     yaraEditorContent.value = response.data.content || ''
   } catch (error) {
     console.error('Ошибка чтения Yara файла:', error)
@@ -218,10 +281,32 @@ const loadYaraFile = async () => {
   }
 }
 
+const createYaraFile = async () => {
+  const fileName = window.prompt('Введите имя нового файла (.yar или .yara):')
+  if (!fileName) {
+    return
+  }
+
+  try {
+    await configRules.createYaraFile(fileName.trim())
+    await loadYaraFiles()
+    await selectYaraFile(fileName.trim())
+    appStore.addNotification('Новый файл успешно создан', 'success')
+  } catch (error) {
+    console.error('Ошибка создания Yara файла:', error)
+    const message = error?.response?.data?.detail || 'Ошибка создания Yara файла'
+    appStore.addNotification(message, 'error')
+  }
+}
+
 const saveYaraFile = async () => {
+  if (!selectedYaraFile.value) {
+    return
+  }
+
   yaraSaving.value = true
   try {
-    await configRules.saveYaraFile(yaraEditorContent.value)
+    await configRules.saveYaraFile(selectedYaraFile.value, yaraEditorContent.value)
     appStore.addNotification('Файл успешно сохранен', 'success')
   } catch (error) {
     console.error('Ошибка сохранения Yara файла:', error)
@@ -232,7 +317,46 @@ const saveYaraFile = async () => {
   }
 }
 
+const deleteYaraFile = async () => {
+  if (!selectedYaraFile.value) {
+    return
+  }
+
+  const fileToDelete = selectedYaraFile.value
+  const confirmed = window.confirm(`Удалить файл ${fileToDelete}?`)
+  if (!confirmed) {
+    return
+  }
+
+  yaraDeleting.value = true
+  try {
+    await configRules.deleteYaraFile(fileToDelete)
+    const oldFiles = [...yaraFiles.value]
+    await loadYaraFiles()
+
+    const remainingFiles = yaraFiles.value.filter((name) => name !== fileToDelete)
+    if (!remainingFiles.includes(selectedYaraFile.value)) {
+      const oldIndex = oldFiles.indexOf(fileToDelete)
+      const nextFile = remainingFiles[Math.min(oldIndex, remainingFiles.length - 1)]
+      if (nextFile) {
+        await selectYaraFile(nextFile)
+      } else {
+        selectedYaraFile.value = ''
+        yaraEditorContent.value = ''
+      }
+    }
+
+    appStore.addNotification('Файл успешно удален', 'success')
+  } catch (error) {
+    console.error('Ошибка удаления Yara файла:', error)
+    const message = error?.response?.data?.detail || 'Ошибка удаления Yara файла'
+    appStore.addNotification(message, 'error')
+  } finally {
+    yaraDeleting.value = false
+  }
+}
+
 onMounted(async () => {
-  await Promise.all([loadSigmaFiles(), loadYaraFile()])
+  await Promise.all([loadSigmaFiles(), loadYaraFiles()])
 })
 </script>

@@ -28,7 +28,7 @@ def create_agent1_chain(llm: BaseLanguageModel) -> RunnableSequence:
     """Create Agent 1 chain for primary log analysis.
 
     Args:
-        llm: LangChain language model (e.g., GigaChat)
+        llm: LangChain language model (e.g., Ollama)
 
     Returns:
         RunnableSequence for primary analysis

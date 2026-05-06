@@ -1155,7 +1155,7 @@ const sendMessage = async () => {
     const responseMode = response.data.mode || 'UNKNOWN'
     
     // Выводим режим работы в консоль браузера
-    console.log(`🤖 GigaChat Mode: ${responseMode}`)
+    console.log(`🤖 AI Mode: ${responseMode}`)
     console.log(`📝 Response length: ${aiResponse.length} characters`)
     console.log(`💬 Message: "${userMessage}"`)
     console.log('---')
@@ -1270,8 +1270,8 @@ const handleFileUpload = async (event) => {
     })
     
     if (response.data.success) {
-      // Показываем только анализ от GigaChat
-      const analysisMsg = response.data.gigachat_analysis
+      // Показываем только AI-анализ
+      const analysisMsg = response.data.ai_analysis
       
       messages.value.push({
         role: 'ai',
@@ -1364,7 +1364,7 @@ const confirmNewChat = async () => {
     isLoading.value = true
     showNewChatModal.value = false
 
-    // Очищаем сообщения в БД и контекст GigaChat
+    // Очищаем сообщения в БД и контекст AI
     await chat.clearMessages(userId)
 
     // Очищаем локальный массив сообщений

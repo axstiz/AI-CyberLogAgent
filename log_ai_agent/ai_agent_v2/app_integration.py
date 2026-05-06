@@ -115,7 +115,7 @@ async def analyze_log_v2(log_content: str) -> dict:
     pipeline = await get_pipeline()
     prepared_log_content = _prepare_log_for_analysis(log_content)
 
-    # GigaChat can return HTTP 429 under burst traffic.
+    # LLM providers can return HTTP 429 under burst traffic.
     # Retry with exponential backoff and serialize analysis calls.
     max_attempts = 3
     backoff_seconds = [0, 2, 5]
@@ -136,7 +136,7 @@ async def analyze_log_v2(log_content: str) -> dict:
                 break
 
             logger.warning(
-                "Rate limit from GigaChat (attempt %s/%s), retrying in %ss",
+                "Rate limit from LLM provider (attempt %s/%s), retrying in %ss",
                 attempt + 1,
                 max_attempts,
                 backoff_seconds[attempt + 1] if attempt + 1 < max_attempts else 0,
