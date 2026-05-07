@@ -19,7 +19,7 @@
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="rounded-lg border border-[#2d313d] bg-[#242424] p-3">
+          <div class="rounded-lg bg-[#222222] p-3">
             <p class="text-sm font-medium text-[#949daf] mb-3">Каталог файлов</p>
             <div class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
               <button
@@ -28,8 +28,8 @@
                 @click="selectSigmaFile(fileName)"
                 class="w-full text-left px-3 py-2 rounded-lg border transition-colors"
                 :class="selectedSigmaFile === fileName
-                  ? 'bg-[#2f2f2f] border-[#4a5070] text-white'
-                  : 'bg-[#252525] border-[#2d313d] text-[#c6cde0] hover:bg-[#2f2f2f]'"
+                  ? 'bg-[#2A2A2A] border-[#4a5070] text-white'
+                  : 'bg-[#202020] border-[#2d313d] text-[#c6cde0] hover:bg-[#262626]'"
               >
                 {{ fileName }}
               </button>
@@ -37,7 +37,7 @@
             </div>
           </div>
 
-          <div class="rounded-lg border border-[#2d313d] bg-[#242424] p-3">
+          <div class="rounded-lg bg-[#222222] p-3">
             <div class="flex items-center justify-between mb-3">
               <p class="text-sm font-medium text-[#949daf]">
                 Редактор: <span class="text-[#d8deec]">{{ selectedSigmaFile || '—' }}</span>
@@ -84,7 +84,7 @@
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="rounded-lg border border-[#2d313d] bg-[#242424] p-3">
+          <div class="rounded-lg bg-[#222222] p-3">
             <p class="text-sm font-medium text-[#949daf] mb-3">Каталог файлов</p>
             <div class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
               <button
@@ -93,8 +93,8 @@
                 @click="selectYaraFile(fileName)"
                 class="w-full text-left px-3 py-2 rounded-lg border transition-colors"
                 :class="selectedYaraFile === fileName
-                  ? 'bg-[#2f2f2f] border-[#4a5070] text-white'
-                  : 'bg-[#252525] border-[#2d313d] text-[#c6cde0] hover:bg-[#2f2f2f]'"
+                  ? 'bg-[#2A2A2A] border-[#4a5070] text-white'
+                  : 'bg-[#202020] border-[#2d313d] text-[#c6cde0] hover:bg-[#262626]'"
               >
                 {{ fileName }}
               </button>
@@ -102,7 +102,7 @@
             </div>
           </div>
 
-          <div class="rounded-lg border border-[#2d313d] bg-[#242424] p-3">
+          <div class="rounded-lg bg-[#222222] p-3">
             <div class="flex items-center justify-between mb-3">
               <p class="text-sm font-medium text-[#949daf]">
                 Редактор: <span class="text-[#d8deec]">{{ selectedYaraFile || '—' }}</span>
