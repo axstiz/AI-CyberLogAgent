@@ -85,28 +85,28 @@ For each group provide:
 
 ---GROUPS---
 [
-  {
+  {{
     "group_id": "g1",
     "events": [
-      {
+      {{
         "description": "Event description",
         "timestamp": "2025-12-17 13:06:06",
         "log_line": "[Wed Dec 17 13:06:06 2025] [error] [client 89.23.74.19] Authentication failed..."
-      }
+      }}
     ],
     "first_seen": "2025-12-17 13:06:06",
     "last_seen": "2025-12-17 13:06:06",
     "keywords": ["SSH brute force", "authentication failure", "89.23.74.19", "admin", "failed login"],
     "description": "Detected a series of failed SSH authentication attempts for user admin from IP 89.23.74.19. Observed 15 login attempts with various passwords indicating a brute force attack. Source IP belongs to suspicious range, recommend blocking and checking logs for successful login."
-  },
-  {
+  }},
+  {{
     "group_id": "g2",
     "events": [...],
     "first_seen": "...",
     "last_seen": "...",
     "keywords": [...],
     "description": "..."
-  }
+  }}
 ]
 ---GROUPS---
 
