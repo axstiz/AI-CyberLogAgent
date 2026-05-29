@@ -97,6 +97,7 @@
               </template>
               <div class="mt-2 inline-flex items-center gap-2 mb-7">
                 <p class="text-xs text-[#ABABBF] text-left">Wavescan assistant</p>
+                <span v-if="msg.processingTime" class="text-[10px] text-[#6b81ff] font-mono">{{ (msg.processingTime / 1000).toFixed(1) }}s</span>
                 <button
                   type="button"
                   class="copy-message-btn"
@@ -122,10 +123,9 @@
           </div>
 
           <div v-if="isLoading" class="flex justify-center pb-2">
-            <div class="flex gap-1.5 px-3 py-2 rounded-full">
-              <div class="w-2 h-2 bg-[#7C7C7C] rounded-full animate-bounce" style="animation-delay: 0ms"/>
-              <div class="w-2 h-2 bg-[#7C7C7C] rounded-full animate-bounce" style="animation-delay: 150ms"/>
-              <div class="w-2 h-2 bg-[#7C7C7C] rounded-full animate-bounce" style="animation-delay: 300ms"/>
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg">
+              <span class="w-1.5 h-1.5 bg-[#6b81ff] rounded-full animate-pulse"/>
+              <span class="text-sm text-[#ABABBF]">Thinking... {{ thinkingElapsed }}s</span>
             </div>
           </div>
         </div>
@@ -419,6 +419,34 @@ const scrollbarDragStartOffset = ref(0)
 const copiedMessageIndex = ref(null)
 const selectedModel = ref('')
 const isModelChanging = ref(false)
+const thinkingStartTime = ref(null)
+const thinkingElapsed = ref('')
+let thinkingTimerInterval = null
+
+const startThinkingTimer = () => {
+  thinkingStartTime.value = Date.now()
+  thinkingElapsed.value = '0.000'
+  thinkingTimerInterval = setInterval(() => {
+    const elapsed = (Date.now() - thinkingStartTime.value) / 1000
+    thinkingElapsed.value = elapsed.toFixed(3)
+  }, 50)
+}
+
+const stopThinkingTimer = () => {
+  if (thinkingTimerInterval) {
+    clearInterval(thinkingTimerInterval)
+    thinkingTimerInterval = null
+  }
+}
+
+watch(isLoading, (loading) => {
+  if (loading) {
+    startThinkingTimer()
+  } else {
+    stopThinkingTimer()
+  }
+})
+
 let clearNotificationsTimer = null
 let copyResetTimer = null
 
@@ -1243,9 +1271,10 @@ const sendMessage = async () => {
       role: 'ai',
       text: aiResponse,
       isNew: false,
+      processingTime: response.data.processing_time_ms,
     })
     await reduceTopAlignSpacerByLastAssistantMessage()
-    
+
   } catch (error) {
     console.error('Error sending message to AI:', error)
     
@@ -1358,8 +1387,16 @@ const handleFileUpload = async (event) => {
         text: analysisMsg,
         isNew: false,
         yaraRules: yaraRules.length > 0 ? yaraRules : undefined,
+        processingTime: response.data.processing_time_ms,
       })
       await reduceTopAlignSpacerByLastAssistantMessage()
+
+      // Если был переанализ (fast pass <30s), показываем notice
+      if (response.data.quality_reanalysis) {
+        const noticeMsg = '⚠️ Первичный анализ выполнен быстрее 30 секунд, запущен повторный для повышения качества.'
+        pushNoticeMessage(noticeMsg)
+        await saveChatMessage('notice', noticeMsg)
+      }
       
       // Сохраняем ответ в БД
       await saveChatMessage('agent', analysisMsg)
@@ -1423,6 +1460,7 @@ ${error.response?.data?.detail || error.message || 'Неизвестная ош�
 }
 
 onUnmounted(() => {
+  stopThinkingTimer()
   if (copyResetTimer) {
     clearTimeout(copyResetTimer)
     copyResetTimer = null

@@ -185,14 +185,52 @@ async def analyze_log_v2(log_content: str) -> dict:
         agent1 = results["stages"].get("agent1", {})
         agent3 = results["stages"]["agent3"]
 
+        processing_time_ms = results.get("total_time_sec", 0) * 1000
+
         result_dict = {
             "description": agent3.get("final_report", ""),
             "severity_level_id": agent3.get("severity_level_id", 3),
             "threat_type_id": agent3.get("threat_type_id", 11),
             "mitre_techniques": agent3.get("mitre_techniques", []),
             "events_found": agent1.get("events_found", 0),
-            "processing_time_ms": results.get("total_time_sec", 0) * 1000,
+            "processing_time_ms": processing_time_ms,
         }
+
+        # Quality check: if log has >= 50 lines but was analyzed suspiciously fast (<30s),
+        # re-run the pipeline to get a more thorough analysis.
+        line_count = sum(1 for line in log_content.splitlines() if line.strip())
+        if line_count >= 50 and processing_time_ms < 30000:
+            logger.warning(
+                "Quality check: %s lines processed in %.0fms (<30s), re-running analysis for better quality",
+                line_count,
+                processing_time_ms,
+            )
+            await asyncio.sleep(1)
+            retry_results = await pipeline.analyze(
+                log_content=prepared_log_content,
+                config=get_callback_config(show_output=False),
+            )
+            if retry_results.get("success") and "agent3" in retry_results.get("stages", {}):
+                retry_agent1 = retry_results["stages"].get("agent1", {})
+                retry_agent3 = retry_results["stages"]["agent3"]
+                retry_time_ms = retry_results.get("total_time_sec", 0) * 1000
+
+                result_dict = {
+                    "description": retry_agent3.get("final_report", ""),
+                    "severity_level_id": retry_agent3.get("severity_level_id", 3),
+                    "threat_type_id": retry_agent3.get("threat_type_id", 11),
+                    "mitre_techniques": retry_agent3.get("mitre_techniques", []),
+                    "events_found": retry_agent1.get("events_found", 0),
+                    "processing_time_ms": retry_time_ms,
+                    "quality_reanalysis": True,
+                }
+                logger.info(
+                    "Quality re-analysis complete in %.0fms (was: %.0fms)",
+                    retry_time_ms,
+                    processing_time_ms,
+                )
+            else:
+                logger.warning("Quality re-analysis failed, keeping original results")
 
         # Generate YARA rules for uncovered MITRE techniques
         try:

@@ -1,4 +1,5 @@
 import logging
+import time
 
 from sqlalchemy import select, delete, func
 from log_ai_agent.db.session import get_async_session
@@ -127,12 +128,14 @@ async def process_chat_message(
     if not message:
         raise ValueError("Message cannot be empty")
 
+    start_time = time.time()
     async with get_async_session() as session:
         response = await _generate_agent_response(session=session, user_id=user_id, user_message=message)
         mode = "agent_llm"
+        elapsed = time.time() - start_time
 
         agent_msg = Message(user_id=user_id, role="agent", content=response)
         session.add(agent_msg)
         await session.commit()
 
-        return {"response": response, "mode": mode}
+        return {"response": response, "mode": mode, "processing_time_ms": elapsed * 1000}

@@ -1995,6 +1995,7 @@ class ChatSendResponse(BaseModel):
     agent_response: str
     mode: str | None = None
     message: str | None = None
+    processing_time_ms: float | None = None
 
 
 class ModelSettingsRequest(BaseModel):
@@ -2073,6 +2074,7 @@ async def send_chat_message(request: ChatSendRequest):
             agent_response=result["response"],
             mode=result["mode"],
             message="Сообщение успешно обработано",
+            processing_time_ms=result.get("processing_time_ms"),
         )
 
     except HTTPException:
@@ -2397,6 +2399,8 @@ async def upload_log_file(
                 response["mitre_techniques"] = analysis_result["mitre_techniques"]
             if "processing_time_ms" in analysis_result:
                 response["processing_time_ms"] = analysis_result["processing_time_ms"]
+            if "quality_reanalysis" in analysis_result:
+                response["quality_reanalysis"] = analysis_result["quality_reanalysis"]
 
             # Save generated YARA rules as pending if any
             generated_rules = analysis_result.get("generated_yara_rules", [])
