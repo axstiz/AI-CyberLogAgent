@@ -51,8 +51,12 @@ services:
       PIPELINE_PROCESSED_LOGS_DIR: ${PIPELINE_PROCESSED_LOGS_DIR:-/app/shared/processed}
       PIPELINE_COLLECTED_LOGS_FILE: ${PIPELINE_COLLECTED_LOGS_FILE:-/app/shared/processed/collected_logs.txt}
       CHUNK_STATE_FILE: ${CHUNK_STATE_FILE_BACKEND:-/app/shared/external/chunk_logs_state.tsv}
+      HF_TOKEN: ${HF_TOKEN}
       OLLAMA_URL: ${OLLAMA_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
+      AITUNNEL_API_KEY: ${AITUNNEL_API_KEY}
+      AITUNNEL_BASE_URL: ${AITUNNEL_BASE_URL}
+      AITUNNEL_MODEL: ${AITUNNEL_MODEL}
       LLM_TEMPERATURE: ${LLM_TEMPERATURE}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS}
       LLM_TIMEOUT: ${LLM_TIMEOUT}
@@ -79,6 +83,7 @@ services:
       - external_logs:/app/shared/external
       - processed_logs:/app/shared/processed
       - chroma_data:/app/log_ai_agent/ai_agent_v2/chroma_db
+      - embedding_models:/app/log_ai_agent/ai_agent_v2/embedding/models
     networks:
       - cyberlog-network
     restart: unless-stopped
@@ -172,6 +177,9 @@ volumes:
   chroma_data:
     driver: local
     name: cyberlog_chroma_data
+  embedding_models:
+    driver: local
+    name: cyberlog_embedding_models
   vector_data:
     driver: local
     name: ${VECTOR_DATA_VOLUME_NAME:-cyberlog_vector_data}

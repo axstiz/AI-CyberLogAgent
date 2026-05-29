@@ -1,14 +1,29 @@
 <template>
   <div class="h-screen flex flex-col relative overflow-hidden">
-    <button
-      @click="showNewChatModal = true"
-      :disabled="isLoading"
-      class="absolute top-6 right-6 z-20 inline-flex items-center gap-2 px-4 py-2 bg-[#2b2d33] hover:bg-[#353842] disabled:bg-[#22242b] disabled:cursor-not-allowed text-[#e6e8ee] hover:text-white disabled:text-dark-500 rounded-xl transition-all text-sm font-medium border border-[#3a3d46]"
-      title="Начать новый чат"
-    >
-      <img src="/pencil_icon.svg" alt="new chat" class="w-4 h-4" />
-      <span>Новый чат</span>
-    </button>
+    <div class="absolute top-6 right-6 z-20 flex items-center gap-2">
+      <select
+        v-model="selectedModel"
+        @change="handleModelChange"
+        :disabled="isModelChanging"
+        class="px-3 py-2 bg-[#2b2d33] hover:bg-[#353842] text-[#e6e8ee] rounded-xl text-sm font-medium border border-[#3a3d46] outline-none cursor-pointer disabled:opacity-50 min-w-[140px]"
+        title="Выбрать LLM модель"
+      >
+        <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+        <option value="claude-opus-4.8-fast">Claude Opus 4.8 Fast</option>
+        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+        <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+        <option value="">Оставить из .env</option>
+      </select>
+      <button
+        @click="showNewChatModal = true"
+        :disabled="isLoading"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-[#2b2d33] hover:bg-[#353842] disabled:bg-[#22242b] disabled:cursor-not-allowed text-[#e6e8ee] hover:text-white disabled:text-dark-500 rounded-xl transition-all text-sm font-medium border border-[#3a3d46]"
+        title="Начать новый чат"
+      >
+        <img src="/pencil_icon.svg" alt="new chat" class="w-4 h-4" />
+        <span>Новый чат</span>
+      </button>
+    </div>
 
     <div class="relative z-10 flex-1 min-h-0 flex flex-col px-4 sm:px-8">
       <div
@@ -355,7 +370,7 @@
 import { ref, nextTick, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useRoute } from 'vue-router'
-import { chat, logs, speech, configRules } from '@/services/api'
+import { chat, logs, speech, configRules, settings } from '@/services/api'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import YaraRuleSuggestion from '@/components/YaraRuleSuggestion.vue'
@@ -402,8 +417,26 @@ const scrollbarThumbTop = ref(0)
 const isDraggingScrollbar = ref(false)
 const scrollbarDragStartOffset = ref(0)
 const copiedMessageIndex = ref(null)
+const selectedModel = ref('')
+const isModelChanging = ref(false)
 let clearNotificationsTimer = null
 let copyResetTimer = null
+
+const handleModelChange = async () => {
+  isModelChanging.value = true
+  try {
+    const response = await settings.setModel(selectedModel.value)
+    if (response.data?.success) {
+      appStore.addNotification(`Модель переключена на: ${response.data.model}`, 'success')
+    }
+  } catch (error) {
+    const errMsg = error?.response?.data?.detail || error.message || 'Ошибка'
+    appStore.addNotification(`Ошибка: ${errMsg}`, 'error')
+    selectedModel.value = ''
+  } finally {
+    isModelChanging.value = false
+  }
+}
 
 // Константы ограничений
 const MAX_MESSAGE_LENGTH = 500

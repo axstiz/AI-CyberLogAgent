@@ -6,6 +6,7 @@ Lazy imports to avoid requiring all provider dependencies at once.
 __all__ = [
     "create_llm",
     "create_ollama_llm",
+    "create_aitunnel_llm",
 ]
 
 
@@ -15,6 +16,10 @@ def __getattr__(name: str):
         from .ollama import create_ollama_llm
 
         return create_ollama_llm
+    if name == "create_aitunnel_llm":
+        from .aitunnel import create_aitunnel_llm
+
+        return create_aitunnel_llm
     if name == "create_llm":
         from .base import create_llm
 

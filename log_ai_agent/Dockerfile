@@ -23,10 +23,11 @@ RUN mkdir log_ai_agent
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --system --index-url https://download.pytorch.org/whl/cpu torch
 
-# --- ШАГ 2: Скачивание модели ---
+# --- ШАГ 2: Скачивание модели эмбеддингов ---
+ARG HF_TOKEN
 RUN mkdir -p /app/log_ai_agent/ai_agent_v2/embedding/models/multilingual-e5-base && \
     pip install tqdm && \
-    hf download intfloat/multilingual-e5-base \
+    HF_TOKEN=${HF_TOKEN} hf download intfloat/multilingual-e5-base \
     --local-dir /app/log_ai_agent/ai_agent_v2/embedding/models/multilingual-e5-base
 
 # --- ШАГ 3: Теперь копируем ВЕСЬ код ---

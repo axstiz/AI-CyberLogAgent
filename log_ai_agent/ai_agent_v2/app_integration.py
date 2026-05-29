@@ -249,6 +249,22 @@ async def analyze_log_v2(log_content: str) -> dict:
         }
 
 
+async def reload_pipeline_llm(model_name: str | None = None) -> None:
+    """Hot-reload LLM in the global pipeline instance without full restart.
+
+    Args:
+        model_name: Model name (e.g. "claude-opus-4.8-fast").
+                    None to revert to env default.
+
+    """
+    pipeline = await get_pipeline()
+    pipeline.reload_llm(model_name)
+    logger.info(
+        "Pipeline LLM hot-reloaded: %s",
+        model_name or "env default",
+    )
+
+
 async def close_pipeline():
     """Close pipeline resources (no-op for now)."""
     global _pipeline, _agent_config

@@ -17,22 +17,27 @@ class LLMProvider(str, Enum):
     """Supported LLM providers."""
 
     OLLAMA = "ollama"
+    AITUNNEL = "aitunnel"
 
 
 def _detect_provider(
     ollama_url: str | None = None,
+    aitunnel_api_key: str | None = None,
 ) -> LLMProvider:
     """Detect which LLM provider to use based on available configuration.
 
     Priority:
     1. Ollama — if ollama_url is provided (on-premise)
+    2. AITUNNEL — if aitunnel_api_key is provided (cloud API)
 
     """
     if ollama_url and ollama_url.strip():
         return LLMProvider.OLLAMA
+    if aitunnel_api_key and aitunnel_api_key.strip():
+        return LLMProvider.AITUNNEL
     raise ValueError(
         "No LLM provider configured. "
-        "Set OLLAMA_URL (for local/on-premise Ollama server)."
+        "Set OLLAMA_URL (for local Ollama) or AITUNNEL_API_KEY (for cloud API)."
     )
 
 
@@ -43,6 +48,11 @@ class AgentConfig:
     # Ollama settings
     ollama_url: str = ""
     ollama_model: str = ""
+
+    # AITUNNEL settings
+    aitunnel_api_key: str = ""
+    aitunnel_base_url: str = "https://api.aitunnel.ru/v1"
+    aitunnel_model: str = "deepseek-v4-flash"
 
     # Common LLM settings
     temperature: float = 0.1
@@ -72,6 +82,13 @@ class AgentConfig:
         if not self.ollama_model:
             self.ollama_model = os.getenv("OLLAMA_MODEL", "")
 
+        if not self.aitunnel_api_key:
+            self.aitunnel_api_key = os.getenv("AITUNNEL_API_KEY", "")
+        if not self.aitunnel_base_url:
+            self.aitunnel_base_url = os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1")
+        if not self.aitunnel_model:
+            self.aitunnel_model = os.getenv("AITUNNEL_MODEL", "deepseek-v4-flash")
+
         if not self.chroma_path:
             self.chroma_path = str(Path(__file__).parent / "chroma_db")
 
@@ -80,6 +97,7 @@ class AgentConfig:
         """Auto-detect LLM provider based on available configuration."""
         return _detect_provider(
             ollama_url=self.ollama_url,
+            aitunnel_api_key=self.aitunnel_api_key,
         )
 
     @classmethod
@@ -88,6 +106,9 @@ class AgentConfig:
         return cls(
             ollama_url=os.getenv("OLLAMA_URL", ""),
             ollama_model=os.getenv("OLLAMA_MODEL", "TinyLlama:1.1b"),
+            aitunnel_api_key=os.getenv("AITUNNEL_API_KEY", ""),
+            aitunnel_base_url=os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1"),
+            aitunnel_model=os.getenv("AITUNNEL_MODEL", "deepseek-v4-flash"),
             temperature=float(os.getenv("LLM_TEMPERATURE", "0.1")),
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", "8192")),
             timeout=int(os.getenv("LLM_TIMEOUT", "90")),

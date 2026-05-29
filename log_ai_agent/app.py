@@ -53,6 +53,7 @@ except ImportError:  # pragma: no cover - environment dependent
 from log_ai_agent.ai_agent_v2.app_integration import (
     analyze_log_v2,
     close_pipeline,
+    reload_pipeline_llm,
     reload_sigma_rules,
     reload_yara_rules,
     warmup_pipeline,
@@ -1988,6 +1989,15 @@ class ChatSendResponse(BaseModel):
     message: str | None = None
 
 
+class ModelSettingsRequest(BaseModel):
+    model: str
+
+
+class ModelSettingsResponse(BaseModel):
+    success: bool
+    model: str
+
+
 async def _store_agent_fallback_message(user_id: int, text: str) -> None:
     """Persist fallback assistant message so chat history remains consistent."""
     if not DATABASE_URL:
@@ -2096,6 +2106,56 @@ async def send_chat_message(request: ChatSendRequest):
             mode=fallback_mode,
             message=fallback_message,
         )
+
+
+@app.post("/api/settings/model", response_model=ModelSettingsResponse)
+async def set_active_model(request: ModelSettingsRequest):
+    """Сменить активную LLM-модель на лету, без перезапуска контейнера.
+
+    Параметры:
+        model: Название модели (например "deepseek-v4-flash", "claude-opus-4.8-fast",
+               "gemini-3.1-flash-lite", и т.д.)
+
+    Возвращает:
+        success: true если модель переключена
+        model: имя активной модели
+
+    """
+    try:
+        model_name = request.model.strip()
+        if not model_name:
+            raise HTTPException(status_code=400, detail="Model name cannot be empty")
+
+        from log_ai_agent.ai_agent_v2.chains.llm import set_active_model as _set_model, create_llm
+
+        # Apply runtime override
+        _set_model(model_name)
+
+        # Validate by creating a test LLM
+        try:
+            test_llm = create_llm()
+            model_display = getattr(test_llm, 'model', model_name)
+        except Exception as e:
+            _set_model(None)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Model '{model_name}' validation failed: {e}",
+            )
+
+        # Hot-reload pipeline LLM if pipeline exists
+        try:
+            await reload_pipeline_llm(model_name)
+        except Exception as e:
+            logger.warning(f"Pipeline LLM reload failed (non-fatal): {e}")
+
+        logger.info(f"Active model set to: {model_display}")
+        return ModelSettingsResponse(success=True, model=model_display)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to set model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/logs/upload/cancel")

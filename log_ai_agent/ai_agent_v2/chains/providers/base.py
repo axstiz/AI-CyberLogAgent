@@ -39,6 +39,16 @@ def create_llm(
             **kwargs,
         )
 
+    if provider.value == "aitunnel":
+        from .aitunnel import create_aitunnel_llm
+
+        return create_aitunnel_llm(
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=timeout,
+            **kwargs,
+        )
+
     raise ValueError(f"Unknown LLM provider: {provider}")
 
 

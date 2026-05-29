@@ -139,6 +139,14 @@ export const speech = {
 }
 
 /**
+ * Настройки системы
+ */
+export const settings = {
+  setModel: (model) =>
+    apiClient.post('/settings/model', { model }),
+}
+
+/**
  * Работа с конфигурацией правил
  */
 export const configRules = {

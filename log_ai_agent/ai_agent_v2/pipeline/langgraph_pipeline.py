@@ -181,6 +181,29 @@ class LogAnalysisPipeline:
         """Light reload of Sigma rules without recreating the pipeline."""
         self._nodes.reload_sigma_rules(rules_list)
 
+    def reload_llm(self, model_name: str | None = None) -> None:
+        """Hot-reload the LLM with a different model, no pipeline restart needed.
+
+        Args:
+            model_name: Model name (e.g. "claude-opus-4.8-fast", "deepseek-v4-flash").
+                       None to revert to env default.
+
+        """
+        from ..chains.llm import set_active_model, create_llm
+
+        if model_name:
+            set_active_model(model_name)
+
+        old_llm = self.llm
+        self.llm = create_llm()
+        self._nodes.llm = self.llm
+
+        logger.info(
+            "Pipeline LLM reloaded: %s (was: %s)",
+            model_name or getattr(old_llm, 'model', 'unknown'),
+            getattr(old_llm, 'model', 'unknown'),
+        )
+
     async def analyze(
         self,
         log_content: str,
