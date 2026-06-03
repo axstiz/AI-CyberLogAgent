@@ -35,21 +35,21 @@ DESCRIPTION_AGENT_SYSTEM_PROMPT = """Ты — эксперт по анализу
 Будь конкретным и информативным. Описание должно помочь в поиске MITRE ATT&CK."""
 
 
-DESCRIPTION_AGENT_USER_PROMPT = """Сгенерируй связное описание и ключевые слова для группы событий.
+DESCRIPTION_AGENT_USER_PROMPT = """Сгенерируй связное описание и ключевые слова для группы подозрительных строк логов.
 
 ГРУППА:
 - ID: {group_id}
 - Время: {first_seen} - {last_seen}
-- Событий в группе: {events_count}
+- Строк логов в группе: {log_lines_count}
 
-СОБЫТИЯ:
-{events}
+СТРОКИ ЛОГОВ:
+{log_lines}
 
 ЗАДАЧА:
 Создай одно связное описание и список ключевых слов для RAG-поиска.
 
 ОПИСАНИЕ:
-- Объедини все события в группе
+- Объедини все строки логов в группе в единое описание
 - Включи характер активности (брутфорс, инъекция и т.д.)
 - Добавь ключевые индикаторы (IP, пользователь, путь и т.д.)
 - Укажи масштаб и временные рамки
@@ -163,18 +163,15 @@ async def generate_group_descriptions(
 
     async def process_group(group: EventGroup) -> GroupDescription:
         async with semaphore:
-            events = group.get("events", [])
-            events_text = "\n".join([
-                f"- [{e.get('timestamp', 'N/A')}] {e.get('description', '')}"
-                for e in events
-            ])
+            log_lines = group.get("log_lines", [])
+            log_lines_text = "\n".join(log_lines)
 
             result = await chain.ainvoke({
                 "group_id": group.get("group_id", ""),
                 "first_seen": group.get("first_seen", ""),
                 "last_seen": group.get("last_seen", ""),
-                "events_count": len(events),
-                "events": events_text,
+                "log_lines_count": len(log_lines),
+                "log_lines": log_lines_text,
             })
 
             return parse_description_response(
