@@ -17,6 +17,7 @@ RUN apt-get update \
         python3 \
         python3-pip \
         python3-venv \
+        python3-yaml \
         software-properties-common \
         tar \
         unzip \
@@ -27,8 +28,7 @@ RUN go install github.com/mingrammer/flog@latest
 
 ENV PATH="/root/go/bin:${PATH}"
 
-RUN git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git /opt/atomic-red-team \
-    && pip3 install pyyaml
+RUN git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git /opt/atomic-red-team
 
 WORKDIR /app
 
