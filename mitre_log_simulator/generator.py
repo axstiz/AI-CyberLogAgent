@@ -22,6 +22,8 @@ import yaml
 PG_APPLICATIONS = ["postgres", "psql", "api", "reporting", "etl"]
 PG_DATABASES = ["appdb", "analytics", "audit", "warehouse"]
 PG_USERS = ["appuser", "readonly", "replicator", "postgres"]
+FLOG_FORMATS = ["apache_combined", "apache_common", "apache_error", "syslog", "rfc3164", "json"]
+
 PG_MESSAGES = [
     "connection authorized: user={user} database={database} application_name={application}",
     "statement: SELECT id, username FROM sessions WHERE active = true LIMIT 10;",
@@ -94,7 +96,7 @@ def parse_config() -> SimulatorConfig:
     parser.add_argument("--random-attacks", action="store_true", default=parse_bool(os.getenv("SIM_RANDOM_ATTACKS")))
     parser.add_argument("--no-attacks", action="store_true", default=parse_bool(os.getenv("SIM_NO_ATTACKS")))
     parser.add_argument("--interval-seconds", type=int, default=random_default_int(os.getenv("SIM_INTERVAL_SECONDS"), 30, 90))
-    parser.add_argument("--noise-batch-size", type=int, default=random_default_int(os.getenv("SIM_NOISE_BATCH_SIZE"), 10, 30))
+    parser.add_argument("--noise-batch-size", type=int, default=random_default_int(os.getenv("SIM_NOISE_BATCH_SIZE"), 30, 80))
     parser.add_argument("--output-dir", default=os.getenv("SIM_OUTPUT_DIR", "/app/output"))
     parser.add_argument("--log-file", default=os.getenv("SIM_LOG_FILE", "/app/output/generated_logs.log"))
     parser.add_argument("--timeline-file", default=os.getenv("SIM_TIMELINE_FILE", "/app/output/attack_timeline.log"))
@@ -164,8 +166,15 @@ def emit_postgres_batch(sink: OutputSink, count: int) -> None:
 
 
 def emit_background_noise(sink: OutputSink, batch_size: int) -> None:
-    web_count = max(1, batch_size)
-    emit_flog_batch(sink, "apache_combined", web_count)
+    count = max(1, batch_size)
+    flog_count = max(1, int(count * 0.7))
+    pg_count = count - flog_count
+
+    fmt = random.choice(FLOG_FORMATS)
+    emit_flog_batch(sink, fmt, flog_count)
+
+    if pg_count > 0:
+        emit_postgres_batch(sink, pg_count)
 
 
 def discover_candidate_techniques(atomics_folder: Path, preferred_platforms: list[str] | None = None) -> list[str]:
@@ -1060,7 +1069,7 @@ def simulate_atomic_test(sink: OutputSink, config: SimulatorConfig, technique: s
             has_logs = True
 
         if idx < len(tests_batch) - 1:
-            emit_background_noise(sink, random.randint(3, 8))
+            emit_background_noise(sink, random.randint(10, 25))
 
     end = datetime.now(timezone.utc)
 
