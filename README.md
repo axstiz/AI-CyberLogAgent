@@ -293,96 +293,148 @@ AI-CyberLogAgent/
 ├── .dockerignore                     # Исключения для Docker
 ├── .gitignore                        # Исключения для Git
 ├── README.md                         # Документация
+│
 ├── mitre_log_simulator/              # Симулятор логов MITRE
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   ├── generator.py
+│   ├── README.md
+│   └── run.ps1
+│
 ├── quick_start/                      # Быстрый запуск (compose + env)
+│   ├── .env.example
+│   └── docker-compose.yml
 │
 └── log_ai_agent/                     # Основной проект
+    ├── .env                          # Конфигурация (не в Git)
+    ├── .env.example                  # Пример конфигурации
+    ├── app.py                        # FastAPI приложение
+    ├── docker-compose.yml            # Оркестрация контейнеров
+    ├── Dockerfile                    # Сборка backend
+    ├── docker-entrypoint.sh          # Скрипт запуска
+    ├── init-db.sql                   # Инициализация БД
+    │
     ├── config/                       # Конфигурация CLI
     │   ├── cfg.py                    # Настройки
-    │   └── commands.py                # Команды CLI
-    ├── src/                         # Скриншоты интерфейса
-    │   ├── page1.png                # Страница авторизации
-    │   ├── page2_1.png              # Чат с ассистентом
-    │   ├── page2_2.png              # Чат с ассистентом
-    │   ├── page3.png                # История отчетов
-    │   ├── page4.png                # Статистика инцидентов
-    │   └── page5.png                # Конфигурация правил
+    │   └── commands.py               # Команды CLI
+    │
+    ├── src/                          # Скриншоты интерфейса
+    │   ├── page1.png                 # Страница авторизации
+    │   ├── page2_1.png               # Чат с ассистентом
+    │   ├── page2_2.png               # Чат с ассистентом
+    │   ├── page3.png                 # История отчетов
+    │   ├── page4.png                 # Статистика инцидентов
+    │   └── page5.png                 # Конфигурация правил
     │
     ├── ai_agent_v2/                  # AI-агент (LangGraph pipeline)
-    │   ├── chains/                   # Цепочки обработки (Agent 1/2/3, RAG)
+    │   ├── chains/                   # Цепочки обработки
     │   │   ├── agent1.py             # Первичный анализ логов
-    │   │   ├── agent2.py             # Детальный AI-отчёт
+    │   │   ├── agent2.py             # RAG-обогащение событий
     │   │   ├── agent3.py             # Финальная суммаризация
+    │   │   ├── description_agent.py  # Генерация описаний техник
     │   │   ├── graph_nodes.py        # LangGraph узлы
-    │   │   ├── rag_chain.py        # RAG MITRE ATT&CK
-    │   │   ├── llm.py             # LLM провайдер
-    │   │   ├── prefilter.py        # Предобработка логов
-    │   │   └── providers/          # LLM провайдеры
-    │   │       ├── base.py          # Базовый класс
-    │   │       └── ollama.py      # Ollama провайдер
-    │   ├── engines/                # Сигнатурные движки
-    │   │   ├── yara_engine.py    # YARA сканер
-    │   │   └── sigma_engine.py   # Sigma сканер
+    │   │   ├── llm.py                # LLM провайдер
+    │   │   ├── prefilter.py          # Предобработка логов
+    │   │   ├── rag_chain.py          # RAG MITRE ATT&CK
+    │   │   ├── yara_generator.py     # Генерация YARA-правил
+    │   │   └── providers/            # LLM провайдеры
+    │   │       ├── base.py           # Базовый класс
+    │   │       ├── ollama.py         # Ollama провайдер
+    │   │       └── openai.py         # OpenAI-совместимый провайдер
+    │   ├── engines/                  # Сигнатурные движки
+    │   │   ├── yara_engine.py        # YARA сканер (yara-python)
+    │   │   └── sigma_engine.py       # Sigma сканер (pysigma)
     │   ├── knowledge_base/           # MITRE ATT&CK данные
-    │   │   ├── manager.py        # ChromaDB менеджер
-    │   │   └── mitre_loader.py # Загрузчик MITRE
-    │   ├── models/                # Типы данных
-    │   │   └── models_types.py   # Pydantic схемы
-    │   ├── parsers/               # Парсеры логов
-    │   │   └── apache_parser.py # Apache парсер
+    │   │   ├── manager.py            # ChromaDB менеджер
+    │   │   ├── mitre_loader.py       # Загрузчик MITRE
+    │   │   ├── mitre_processed.json  # Обработанные техники (88 шт.)
+    │   │   └── enterprise-attack.json# STIX-дамп (резервный)
+    │   ├── models/                   # Типы данных
+    │   │   └── schemas.py            # Pydantic схемы
+    │   ├── parsers/                  # Парсеры логов
+    │   │   └── apache_parser.py      # Apache парсер
     │   ├── pipeline/                 # LangGraph pipeline
-    │   │   ├── langgraph_pipeline.py # Основной граф
-    │   │   └── __init__.py
-    │   ├── prompts/               # Промты для LLM
-    │   │   ├── system.py        # Системный промпт
-    │   │   └── log_analysis.py # Промпт анализа логов
-    │   ├── rules/               # Правила обнаружения
-    │   │   ├── yara/         # YARA правила
-    │   │   └── sigma/        # Sigma правила
-    │   ├── embedding/            # Эмбединговая модель
-    │   │   ├── manager.py    # Загрузчик модели
-    │   │   └── models/   # Модель (не в Git)
-    │   ├── visual_graph/         # Визуализация графа
-    │   │   └── render_graph.py # Рендер графа
-    │   ├── chroma_db/           # Векторная БД (не в Git)
-    │   ├── mitre_data/          # MITRE STIX JSON (скачивается, не в Git)
-    │   ├── pipeline_tests/      # Тесты пайплайна
-    │   ├── app_integration.py  # Интеграция с FastAPI
-    │   ├── callbacks.py      # Колбэки
-    │   ├── chat_integration.py # Чат с ИИ
-    │   ├── config.py       # Конфигурация агента
-    │   ├── init_mitre.py  # Инициализация MITRE
-    │   ├── models_types.py # Типы моделей
-    │   ├── run.py        # Точка входа
-    │   └── README.md    # Документация модуля
+    │   │   ├── langgraph_pipeline.py # Основной граф (StateGraph)
+    │   │   └── README_PIPELINE.md    # Документация пайплайна
+    │   ├── prompts/                  # Промты для LLM
+    │   │   ├── system.py             # Системный промпт
+    │   │   ├── log_analysis.py       # Промпт анализа логов
+    │   │   └── yara_generation.py    # Промпт генерации YARA
+    │   ├── rules/                    # Правила обнаружения
+    │   │   ├── yara/                 # YARA правила (8 шт.)
+    │   │   └── sigma/                # Sigma правила (9 шт.)
+    │   ├── embedding/                # Эмбединговая модель
+    │   │   ├── manager.py            # Загрузчик модели
+    │   │   └── models/               # Модель (не в Git)
+    │   │       └── multilingual-e5-base/
+    │   ├── visual_graph/             # Визуализация графа
+    │   │   └── render_graph.py       # Рендер (ASCII + Mermaid)
+    │   ├── metrics/                  # Метрики качества детекции
+    │   │   ├── evaluate.py           # Сравнение ground truth с детекциями
+    │   │   ├── metrics_logger.py     # Логирование метрик после анализа
+    │   │   ├── README_METRICS.md     # Документация метрик
+    │   │   ├── pipeline_metrics.log  # Журнал детекций (создаётся)
+    │   │   └── TESTS_DATA/           # Тестовые данные и отчёты
+    │   │       ├── SUMMARY_REPORT.md
+    │   │       ├── test1/
+    │   │       └── test2/
+    │   ├── examples/                 # Примеры использования
+    │   │   └── basic.py
+    │   ├── chroma_db/                # Векторная БД (создаётся)
+    │   ├── pipeline_tests/           # Тесты пайплайна
+    │   │   ├── conftest.py
+    │   │   ├── rag_ground_truth.json
+    │   │   ├── run_rag_eval.py
+    │   │   ├── test_agent1.py
+    │   │   ├── test_agent3.py
+    │   │   ├── test_description_agent.py
+    │   │   ├── test_full_pipeline.py
+    │   │   ├── test_graph_nodes.py
+    │   │   ├── test_llm.py
+    │   │   ├── test_new_features.py
+    │   │   ├── test_pipeline_basic.py
+    │   │   ├── test_prefilter.py
+    │   │   ├── test_quick.py
+    │   │   ├── test_rag.py
+    │   │   ├── test_rag_eval.py
+    │   │   ├── test_rag_evaluation.py
+    │   │   ├── test_rag_flow.py
+    │   │   ├── test_yara.py
+    │   │   ├── test_yara_generator.py
+    │   │   └── test_yara_sigma.py
+    │   ├── app_integration.py        # Интеграция с FastAPI
+    │   ├── callbacks.py              # Колбэки
+    │   ├── chat_integration.py       # Чат с ИИ
+    │   ├── config.py                 # Конфигурация агента
+    │   ├── init_mitre.py             # Инициализация MITRE
+    │   ├── models_types.py           # Типы моделей
+    │   ├── run.py                    # Точка входа
+    │   └── README.md                 # Документация модуля
     │
-    ├── pipeline/                 # Приём и обработка логов
-    │   ├── kafka_consumer.py   # Потребитель Kafka
-    │   ├── log_ingest_api.py # API загрузки логов
-    │   └── README_INGEST_API.md # Документация API
+    ├── pipeline/                     # Приём и обработка логов
+    │   ├── __init__.py
+    │   ├── kafka_consumer.py         # Потребитель Kafka
+    │   ├── log_ingest_api.py         # API загрузки логов
+    │   ├── README_INGEST_API.md      # Документация API
+    │   └── examples/
+    │       └── send_logs_to_ingest_api.py
     │
-    ├── vector/                 # Vector (сбор логов)
-    │   ├── vector.toml      # Конфигурация Vector
-    │   └── lua/           # Lua-скрипты
+    ├── postgres/                     # Контейнер PostgreSQL
+    │   └── Dockerfile
     │
-    ├── site/                 # Vue.js фронтенд
-    │   ├── public/           # Статические ресурсы
-    │   ├── src/              # Исходники фронтенда
-    │   ├── dist/             # Сборка фронтенда (генерируется)
-    │   ├── Dockerfile        # Сборка фронтенда
-    │   ├── nginx.conf        # Конфигурация Nginx
-    │   └── package.json      # Зависимости фронтенда
-    ├── .env                 # Конфигурация (не в Git)
-    ├── .env.example         # Пример конфигурации
-    ├── app.py              # FastAPI приложение
-    ├── docker-compose.yml  # Оркестрация контейнеров
-    ├── Dockerfile         # Сборка backend
-    ├── docker-entrypoint.sh # Скрипт запуска
-    ├── init-db.sql        # Инициализация БД
-    ├── postgres/          # Контейнер PostgreSQL
-    └── vector/            # Vector (сбор логов)
-        ├── vector.toml    # Конфигурация Vector
-        └── lua/           # Lua-скрипты
+    ├── vector/                       # Vector (сбор логов)
+    │   ├── vector.toml               # Конфигурация Vector
+    │   ├── Dockerfile
+    │   └── lua/
+    │       └── chunk_logs.lua
+    │
+    └── site/                         # Vue.js фронтенд
+        ├── public/                   # Статические ресурсы (SVG, звуки)
+        ├── src/                      # Исходники (Vue, Pinia, Router)
+        ├── dist/                     # Сборка (генерируется)
+        ├── Dockerfile                # Сборка фронтенда
+        ├── nginx.conf                # Конфигурация Nginx
+        └── package.json              # Зависимости фронтенда
 ```
 
 ## Схема БД
