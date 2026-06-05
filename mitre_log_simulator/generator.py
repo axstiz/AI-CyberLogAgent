@@ -22,8 +22,6 @@ import yaml
 PG_APPLICATIONS = ["postgres", "psql", "api", "reporting", "etl"]
 PG_DATABASES = ["appdb", "analytics", "audit", "warehouse"]
 PG_USERS = ["appuser", "readonly", "replicator", "postgres"]
-FLOG_FORMATS = ["apache_combined", "apache_common", "apache_error", "syslog", "rfc3164", "json"]
-
 PG_MESSAGES = [
     "connection authorized: user={user} database={database} application_name={application}",
     "statement: SELECT id, username FROM sessions WHERE active = true LIMIT 10;",
@@ -166,15 +164,8 @@ def emit_postgres_batch(sink: OutputSink, count: int) -> None:
 
 
 def emit_background_noise(sink: OutputSink, batch_size: int) -> None:
-    count = max(1, batch_size)
-    flog_count = max(1, int(count * 0.7))
-    pg_count = count - flog_count
-
-    fmt = random.choice(FLOG_FORMATS)
-    emit_flog_batch(sink, fmt, flog_count)
-
-    if pg_count > 0:
-        emit_postgres_batch(sink, pg_count)
+    web_count = max(1, batch_size)
+    emit_flog_batch(sink, "apache_combined", web_count)
 
 
 def discover_candidate_techniques(atomics_folder: Path, preferred_platforms: list[str] | None = None) -> list[str]:
