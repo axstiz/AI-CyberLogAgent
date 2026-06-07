@@ -532,10 +532,8 @@ AI-CyberLogAgent/
 
 ## Метрики качества
 
-Подробная документация: `ai_agent_v2/metrics/README_METRICS.md`
+Подробная документация: `ai_agent_v2/metrics/README_METRICS.md`    
 Текущая сводка: `ai_agent_v2/metrics/TESTS_DATA/SUMMARY_REPORT.md`
-
----
 
 ## О разработчиках
 
@@ -552,5 +550,11 @@ AI-CyberLogAgent/
 
 ### Контакты
 
-Почта - nikitaletskolyuk@gmail.com
+Почта - nikitaletskolyuk@gmail.com    
 Telegram - @sser1to
+
+## Copyright
+
+Copyright © 2025 Mitoshi Team. All rights reserved.
+
+This repository and its contents are the intellectual property of Mitoshi Team. Unauthorized copying, modification, distribution, or use of this software, in whole or in part, is prohibited without prior written permission from the authors.
