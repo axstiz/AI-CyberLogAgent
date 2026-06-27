@@ -549,7 +549,7 @@ AI-CyberLogAgent/
 - **Николай Кочкин** - Test engineer
 
 ### Контакты
-####
+
 Почта - litsummer@mail.ru    
 Telegram - @Litsummer
 
