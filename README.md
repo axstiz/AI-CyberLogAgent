@@ -1,5 +1,8 @@
 ![Wavescan](./log_ai_agent/site/public/wavescan_new_logo.svg)
 
+[![Team Repo](https://img.shields.io/badge/github-Mitoshi_Team-181717?style=flat-square&logo=github)](https://github.com/Mitoshi-Team/AI-CyberLogAgent)
+[![Release 1.0.1](https://img.shields.io/badge/release-1.0.1-blue?style=flat-square&logo=github)](https://github.com/Mitoshi-Team/AI-CyberLogAgent/releases/tag/1.0.1)
+
 # Wavescan
 
 ## Описание
@@ -546,9 +549,9 @@ AI-CyberLogAgent/
 - **Николай Кочкин** - Test engineer
 
 ### Контакты
-
-Почта - nikitaletskolyuk@gmail.com    
-Telegram - @sser1to
+####
+Почта - litsummer@mail.ru    
+Telegram - @Litsummer
 
 ## Copyright
 
