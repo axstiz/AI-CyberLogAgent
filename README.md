@@ -208,13 +208,13 @@ uv run -m log_ai_agent.ai_agent_v2.visual_graph.render_graph
 1. Клонируем репозиторий
 
 ```bash
-git clone https://github.com/Mitoshi-Team/AI-CyberLogAgent
+git clone https://github.com/axstiz/AI-CyberLogAgent.git
 ```
 
 2. Переходим в папку
 
 ```bash
-cd log_ai_agent
+cd AI-CyberLogAgent/log_ai_agent
 ```
 
 3. Создаем .env на основе .env.example
