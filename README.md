@@ -1,7 +1,7 @@
 ![Wavescan](./log_ai_agent/site/public/wavescan_new_logo.svg)
 
-[![Team Repo](https://img.shields.io/badge/github-Mitoshi_Team-181717?style=flat-square&logo=github)](https://github.com/Mitoshi-Team/AI-CyberLogAgent)
-[![Release 1.0.1](https://img.shields.io/badge/release-1.0.1-blue?style=flat-square&logo=github)](https://github.com/Mitoshi-Team/AI-CyberLogAgent/releases/tag/1.0.1)
+[![Team Repo](https://img.shields.io/badge/github-Mitoshi_Team-7C3AED?style=for-the-badge&logo=github)](https://github.com/Mitoshi-Team/AI-CyberLogAgent)
+[![Release 1.0.1](https://img.shields.io/badge/release-1.0.1-7C3AED?style=for-the-badge&logo=github)](https://github.com/Mitoshi-Team/AI-CyberLogAgent/releases/tag/1.0.1)
 
 # Wavescan
 
