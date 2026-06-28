@@ -303,6 +303,14 @@ AI-CyberLogAgent/
 ├── .gitignore                        # Исключения для Git
 ├── README.md                         # Документация
 │
+├── logs_examples/                    # Примеры логов для тестирования
+│   ├── basic_logs.log
+│   ├── security_audit.log
+│   ├── all_incident_types.log
+│   ├── high_error_rate.log
+│   ├── memory_leak_incidents.log
+│   └── 24_hour_timeline.log
+│
 ├── mitre_log_simulator/              # Симулятор логов MITRE
 │   ├── docker-compose.yml
 │   ├── Dockerfile
