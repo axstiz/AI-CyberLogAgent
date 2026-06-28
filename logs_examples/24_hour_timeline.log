@@ -1,0 +1,259 @@
+[Tue Dec 16 01:17:16 2025] [notice] prefork.c: Child process 6935 is entering scoreboard slot 4
+[Tue Dec 16 01:27:00 2025] [notice] prefork.c: Child process 6599 is entering scoreboard slot 6
+[Tue Dec 16 01:36:43 2025] [notice] prefork.c: Child process 6237 is entering scoreboard slot 9
+[Tue Dec 16 01:44:47 2025] [notice] jk2_init() Found child 6535 in scoreboard slot 9
+[Tue Dec 16 01:50:10 2025] [notice] prefork.c: Child process 6466 is entering scoreboard slot 7
+[Tue Dec 16 01:55:11 2025] [notice] jk2_init() Found child 6638 in scoreboard slot 2
+[Tue Dec 16 02:01:12 2025] [notice] jk2_init() Found child 6958 in scoreboard slot 8
+[Tue Dec 16 02:06:34 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 02:15:12 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 02:24:10 2025] [notice] Server built: Dec 16 2025 02:24:10
+[Tue Dec 16 02:31:13 2025] [notice] Server built: Dec 16 2025 02:31:13
+[Tue Dec 16 02:40:43 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 02:46:09 2025] [notice] prefork.c: Child process 6311 is entering scoreboard slot 9
+[Tue Dec 16 02:54:47 2025] [notice] prefork.c: Child process 6598 is entering scoreboard slot 7
+[Tue Dec 16 03:00:30 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 03:09:44 2025] [notice] prefork.c: Child process 6140 is entering scoreboard slot 8
+[Tue Dec 16 03:19:01 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 03:28:21 2025] [notice] prefork.c: Child process 6068 is entering scoreboard slot 4
+[Tue Dec 16 03:37:40 2025] [notice] jk2_init() Found child 6351 in scoreboard slot 5
+[Tue Dec 16 03:43:21 2025] [notice] Server built: Dec 16 2025 03:43:21
+[Tue Dec 16 03:50:55 2025] [notice] jk2_init() Found child 6914 in scoreboard slot 7
+[Tue Dec 16 04:00:36 2025] [notice] jk2_init() Found child 6272 in scoreboard slot 7
+[Tue Dec 16 04:08:07 2025] [notice] jk2_init() Found child 6255 in scoreboard slot 10
+[Tue Dec 16 04:13:57 2025] [notice] Server built: Dec 16 2025 04:13:57
+[Tue Dec 16 04:22:19 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 04:28:08 2025] [notice] jk2_init() Found child 6868 in scoreboard slot 6
+[Tue Dec 16 04:35:39 2025] [notice] jk2_init() Found child 6826 in scoreboard slot 3
+[Tue Dec 16 04:40:44 2025] [notice] prefork.c: Child process 6839 is entering scoreboard slot 9
+[Tue Dec 16 04:45:58 2025] [notice] jk2_init() Found child 6830 in scoreboard slot 1
+[Tue Dec 16 04:55:36 2025] [notice] jk2_init() Found child 6519 in scoreboard slot 3
+[Tue Dec 16 05:01:00 2025] [notice] prefork.c: Child process 6051 is entering scoreboard slot 7
+[Tue Dec 16 05:07:08 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 05:16:44 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 05:26:00 2025] [notice] Server built: Dec 16 2025 05:26:00
+[Tue Dec 16 05:31:39 2025] [notice] prefork.c: Child process 6295 is entering scoreboard slot 4
+[Tue Dec 16 05:37:57 2025] [notice] Server built: Dec 16 2025 05:37:57
+[Tue Dec 16 05:43:37 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 05:48:49 2025] [notice] prefork.c: Child process 6581 is entering scoreboard slot 3
+[Tue Dec 16 05:57:35 2025] [notice] jk2_init() Found child 6976 in scoreboard slot 8
+[Tue Dec 16 06:02:54 2025] [notice] Server built: Dec 16 2025 06:02:54
+[Tue Dec 16 06:10:02 2025] [notice] prefork.c: Child process 6838 is entering scoreboard slot 10
+[Tue Dec 16 06:17:21 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 06:24:12 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 06:31:54 2025] [notice] jk2_init() Found child 6607 in scoreboard slot 8
+[Tue Dec 16 06:37:19 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 06:46:50 2025] [notice] jk2_init() Found child 6094 in scoreboard slot 5
+[Tue Dec 16 06:53:46 2025] [notice] Server built: Dec 16 2025 06:53:46
+[Tue Dec 16 06:59:50 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 07:09:18 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 07:16:15 2025] [notice] prefork.c: Child process 6068 is entering scoreboard slot 6
+[Tue Dec 16 07:21:36 2025] [notice] prefork.c: Child process 6656 is entering scoreboard slot 8
+[Tue Dec 16 07:26:44 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 07:35:58 2025] [notice] jk2_init() Found child 6221 in scoreboard slot 1
+[Tue Dec 16 07:53:25 2025] [error] Process 6313 exceeding memory limit: 818MB
+[Tue Dec 16 08:02:15 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 08:11:13 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 08:17:07 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 08:24:04 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 08:29:57 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 08:36:12 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 08:43:15 2025] [notice] Server built: Dec 16 2025 08:43:15
+[Tue Dec 16 08:52:36 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 09:02:20 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 09:11:32 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 09:20:49 2025] [notice] Server built: Dec 16 2025 09:20:49
+[Tue Dec 16 09:28:04 2025] [notice] jk2_init() Found child 6218 in scoreboard slot 8
+[Tue Dec 16 09:34:27 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 09:42:29 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 09:51:27 2025] [notice] jk2_init() Found child 6640 in scoreboard slot 4
+[Tue Dec 16 09:58:41 2025] [notice] jk2_init() Found child 6545 in scoreboard slot 1
+[Tue Dec 16 10:04:37 2025] [notice] Server built: Dec 16 2025 10:04:37
+[Tue Dec 16 10:13:04 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 10:18:26 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 10:24:24 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 10:29:38 2025] [notice] prefork.c: Child process 6960 is entering scoreboard slot 5
+[Tue Dec 16 10:46:34 2025] [error] Unable to establish connection to worker node
+[Tue Dec 16 10:54:38 2025] [error] Unable to establish connection to worker node
+[Tue Dec 16 11:04:01 2025] [error] Backend connection pool exhausted
+[Tue Dec 16 11:11:32 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 11:18:58 2025] [notice] Server built: Dec 16 2025 11:18:58
+[Tue Dec 16 11:25:36 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 11:35:13 2025] [notice] Server built: Dec 16 2025 11:35:13
+[Tue Dec 16 11:44:10 2025] [notice] jk2_init() Found child 6783 in scoreboard slot 4
+[Tue Dec 16 11:53:25 2025] [notice] Server built: Dec 16 2025 11:53:25
+[Tue Dec 16 11:58:38 2025] [notice] prefork.c: Child process 6769 is entering scoreboard slot 9
+[Tue Dec 16 12:07:46 2025] [notice] jk2_init() Found child 6217 in scoreboard slot 1
+[Tue Dec 16 12:14:32 2025] [notice] jk2_init() Found child 6680 in scoreboard slot 4
+[Tue Dec 16 12:21:32 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 12:28:48 2025] [notice] jk2_init() Found child 6457 in scoreboard slot 9
+[Tue Dec 16 12:35:07 2025] [notice] Server built: Dec 16 2025 12:35:07
+[Tue Dec 16 12:41:14 2025] [notice] jk2_init() Found child 6684 in scoreboard slot 9
+[Tue Dec 16 12:49:05 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 12:54:41 2025] [notice] jk2_init() Found child 6145 in scoreboard slot 5
+[Tue Dec 16 13:00:35 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 13:05:59 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 13:12:39 2025] [notice] jk2_init() Found child 6941 in scoreboard slot 9
+[Tue Dec 16 13:19:31 2025] [notice] prefork.c: Child process 6705 is entering scoreboard slot 6
+[Tue Dec 16 13:29:15 2025] [notice] jk2_init() Found child 6063 in scoreboard slot 1
+[Tue Dec 16 13:37:57 2025] [notice] jk2_init() Found child 6421 in scoreboard slot 2
+[Tue Dec 16 13:47:00 2025] [notice] prefork.c: Child process 6561 is entering scoreboard slot 7
+[Tue Dec 16 13:52:22 2025] [notice] prefork.c: Child process 6567 is entering scoreboard slot 10
+[Tue Dec 16 13:57:25 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 14:06:15 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 14:21:48 2025] [error] Memory allocation failed for worker 6801
+[Tue Dec 16 14:27:26 2025] [error] Process 6825 exceeding memory limit: 1467MB
+[Tue Dec 16 14:35:20 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 14:43:03 2025] [notice] jk2_init() Found child 6369 in scoreboard slot 7
+[Tue Dec 16 14:49:34 2025] [notice] jk2_init() Found child 6325 in scoreboard slot 4
+[Tue Dec 16 14:59:12 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 15:04:50 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 15:11:33 2025] [notice] prefork.c: Child process 6602 is entering scoreboard slot 5
+[Tue Dec 16 15:19:13 2025] [notice] Server built: Dec 16 2025 15:19:13
+[Tue Dec 16 15:24:43 2025] [notice] jk2_init() Found child 6737 in scoreboard slot 8
+[Tue Dec 16 15:30:35 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 15:37:29 2025] [notice] Server built: Dec 16 2025 15:37:29
+[Tue Dec 16 15:47:20 2025] [notice] prefork.c: Child process 6028 is entering scoreboard slot 5
+[Tue Dec 16 15:52:35 2025] [notice] prefork.c: Child process 6480 is entering scoreboard slot 10
+[Tue Dec 16 16:00:15 2025] [notice] Server built: Dec 16 2025 16:00:15
+[Tue Dec 16 16:06:36 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 16:12:19 2025] [notice] prefork.c: Child process 6422 is entering scoreboard slot 4
+[Tue Dec 16 16:17:29 2025] [notice] prefork.c: Child process 6732 is entering scoreboard slot 7
+[Tue Dec 16 16:26:26 2025] [notice] prefork.c: Child process 6609 is entering scoreboard slot 4
+[Tue Dec 16 16:33:14 2025] [notice] prefork.c: Child process 6293 is entering scoreboard slot 6
+[Tue Dec 16 16:40:53 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 16:48:01 2025] [notice] Server built: Dec 16 2025 16:48:01
+[Tue Dec 16 16:55:04 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 17:00:31 2025] [notice] prefork.c: Child process 6278 is entering scoreboard slot 8
+[Tue Dec 16 17:07:46 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 17:13:34 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 17:20:37 2025] [notice] prefork.c: Child process 6458 is entering scoreboard slot 7
+[Tue Dec 16 17:26:27 2025] [notice] Server built: Dec 16 2025 17:26:27
+[Tue Dec 16 17:34:07 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 17:49:24 2025] [error] Worker process 6165 failed to initialize
+[Tue Dec 16 17:59:18 2025] [error] mod_jk child workerEnv in critical error state 13
+[Tue Dec 16 18:05:23 2025] [error] Worker process 6956 failed to initialize
+[Tue Dec 16 18:10:39 2025] [error] mod_jk child workerEnv in critical error state 5
+[Tue Dec 16 18:16:43 2025] [error] Worker process 6382 failed to initialize
+[Tue Dec 16 18:23:11 2025] [error] Worker process 6000 failed to initialize
+[Tue Dec 16 18:32:13 2025] [error] Worker process 6797 failed to initialize
+[Tue Dec 16 18:38:56 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 18:47:32 2025] [notice] prefork.c: Child process 6127 is entering scoreboard slot 4
+[Tue Dec 16 18:53:49 2025] [notice] prefork.c: Child process 6517 is entering scoreboard slot 6
+[Tue Dec 16 19:02:56 2025] [notice] prefork.c: Child process 6920 is entering scoreboard slot 1
+[Tue Dec 16 19:09:27 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 19:14:32 2025] [notice] jk2_init() Found child 6967 in scoreboard slot 2
+[Tue Dec 16 19:23:58 2025] [notice] Server built: Dec 16 2025 19:23:58
+[Tue Dec 16 19:40:02 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 19:46:35 2025] [error] Memory allocation failed for worker 6943
+[Tue Dec 16 19:53:15 2025] [error] Memory allocation failed for worker 6442
+[Tue Dec 16 20:01:19 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 20:10:58 2025] [error] Memory allocation failed for worker 6669
+[Tue Dec 16 20:16:28 2025] [error] System memory critically low, killing processes
+[Tue Dec 16 20:24:39 2025] [error] Memory allocation failed for worker 6844
+[Tue Dec 16 20:29:49 2025] [error] Memory allocation failed for worker 6500
+[Tue Dec 16 20:39:28 2025] [error] Memory allocation failed for worker 6498
+[Tue Dec 16 20:45:50 2025] [notice] prefork.c: Child process 6574 is entering scoreboard slot 1
+[Tue Dec 16 20:50:59 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 20:57:02 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 21:04:31 2025] [notice] jk2_init() Found child 6932 in scoreboard slot 6
+[Tue Dec 16 21:12:19 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Tue Dec 16 21:21:32 2025] [notice] Server built: Dec 16 2025 21:21:32
+[Tue Dec 16 21:30:19 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 21:37:36 2025] [notice] Server built: Dec 16 2025 21:37:36
+[Tue Dec 16 21:45:03 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 21:53:16 2025] [notice] prefork.c: Child process 6522 is entering scoreboard slot 2
+[Tue Dec 16 21:59:33 2025] [notice] jk2_init() Found child 6492 in scoreboard slot 5
+[Tue Dec 16 22:06:34 2025] [notice] jk2_init() Found child 6807 in scoreboard slot 8
+[Tue Dec 16 22:13:10 2025] [notice] jk2_init() Found child 6626 in scoreboard slot 7
+[Tue Dec 16 22:20:36 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Tue Dec 16 22:30:29 2025] [notice] Server built: Dec 16 2025 22:30:29
+[Tue Dec 16 22:44:59 2025] [error] Authentication failed for user 'root' from 191.153.198.196
+[Tue Dec 16 22:54:34 2025] [error] Authentication failed for user 'root' from 121.32.215.100
+[Tue Dec 16 22:59:41 2025] [error] Possible brute force attack from 138.112.218.176
+[Tue Dec 16 23:07:59 2025] [error] Possible brute force attack from 21.122.17.156
+[Tue Dec 16 23:17:17 2025] [error] Authentication failed for user 'root' from 183.2.184.26
+[Tue Dec 16 23:26:02 2025] [error] Authentication failed for user 'user' from 166.8.219.202
+[Tue Dec 16 23:35:13 2025] [error] Multiple failed login attempts detected from 18.166.21.43
+[Tue Dec 16 23:44:42 2025] [error] Authentication failed for user 'user' from 162.168.8.83
+[Tue Dec 16 23:54:07 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 00:02:50 2025] [notice] Server built: Dec 17 2025 00:02:50
+[Wed Dec 17 00:08:18 2025] [notice] Server built: Dec 17 2025 00:08:18
+[Wed Dec 17 00:13:37 2025] [notice] jk2_init() Found child 6289 in scoreboard slot 2
+[Wed Dec 17 00:21:28 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 00:36:03 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 00:41:29 2025] [error] Worker process 6649 failed to initialize
+[Wed Dec 17 00:47:12 2025] [error] Worker process 6449 failed to initialize
+[Wed Dec 17 00:52:16 2025] [error] mod_jk child workerEnv in critical error state 13
+[Wed Dec 17 00:58:15 2025] [error] Worker process 6433 failed to initialize
+[Wed Dec 17 01:03:17 2025] [error] mod_jk child workerEnv in critical error state 7
+[Wed Dec 17 01:12:43 2025] [notice] jk2_init() Found child 6649 in scoreboard slot 5
+[Wed Dec 17 01:18:29 2025] [notice] prefork.c: Child process 6213 is entering scoreboard slot 2
+[Wed Dec 17 01:25:55 2025] [notice] prefork.c: Child process 6418 is entering scoreboard slot 5
+[Wed Dec 17 01:32:54 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:40:17 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:55:13 2025] [crit] Segmentation fault in worker process 6148
+[Wed Dec 17 02:00:17 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 02:05:23 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 02:14:29 2025] [crit] Child process 6608 terminated by signal 6
+[Wed Dec 17 02:20:50 2025] [crit] Child process 6032 terminated by signal 6
+[Wed Dec 17 02:28:03 2025] [crit] Segmentation fault in worker process 6874
+[Wed Dec 17 02:34:02 2025] [crit] Child process 6409 terminated by signal 9
+[Wed Dec 17 02:40:24 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 02:49:12 2025] [crit] Child process 6964 terminated by signal 15
+[Wed Dec 17 02:58:45 2025] [crit] Child process 6788 terminated by signal 11
+[Wed Dec 17 03:11:55 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 03:19:51 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 03:27:00 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 03:33:36 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 03:40:26 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 03:45:35 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 03:54:41 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 04:04:09 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 04:11:07 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 04:17:16 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 04:32:37 2025] [error] mod_jk child workerEnv in critical error state 10
+[Wed Dec 17 04:38:54 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 04:44:53 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 04:50:42 2025] [error] Worker process 6781 failed to initialize
+[Wed Dec 17 04:58:20 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 05:04:06 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 05:13:50 2025] [error] Worker process 6738 failed to initialize
+[Wed Dec 17 05:20:27 2025] [notice] jk2_init() Found child 6790 in scoreboard slot 7
+[Wed Dec 17 05:29:47 2025] [notice] Server built: Dec 17 2025 05:29:47
+[Wed Dec 17 05:36:41 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 05:43:19 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 05:52:16 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 05:58:57 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 06:06:55 2025] [notice] prefork.c: Child process 6426 is entering scoreboard slot 4
+[Wed Dec 17 06:13:56 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 06:21:15 2025] [notice] prefork.c: Child process 6203 is entering scoreboard slot 9
+[Wed Dec 17 06:26:46 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 06:35:49 2025] [notice] Server built: Dec 17 2025 06:35:49
+[Wed Dec 17 06:41:50 2025] [notice] jk2_init() Found child 6436 in scoreboard slot 6
+[Wed Dec 17 06:48:12 2025] [notice] prefork.c: Child process 6500 is entering scoreboard slot 4
+[Wed Dec 17 06:54:59 2025] [notice] prefork.c: Child process 6383 is entering scoreboard slot 8
+[Wed Dec 17 07:01:58 2025] [notice] jk2_init() Found child 6224 in scoreboard slot 6
+[Wed Dec 17 07:07:04 2025] [notice] prefork.c: Child process 6908 is entering scoreboard slot 6
+[Wed Dec 17 07:13:25 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 07:21:56 2025] [notice] jk2_init() Found child 6470 in scoreboard slot 9
+[Wed Dec 17 07:29:26 2025] [notice] prefork.c: Child process 6229 is entering scoreboard slot 6
+[Wed Dec 17 07:36:44 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 07:43:52 2025] [notice] Server built: Dec 17 2025 07:43:52
+[Wed Dec 17 07:57:05 2025] [error] Access forbidden for 153.167.2.198: insufficient privileges
+[Wed Dec 17 08:05:38 2025] [error] Access forbidden for 91.12.58.224: insufficient privileges
+[Wed Dec 17 08:12:19 2025] [error] Permission denied: user 'guest' cannot access /etc/passwd
+[Wed Dec 17 08:19:13 2025] [error] Access forbidden for 110.178.222.4: insufficient privileges
+[Wed Dec 17 08:25:47 2025] [notice] jk2_init() Found child 6764 in scoreboard slot 6
+[Wed Dec 17 08:32:59 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 08:39:18 2025] [notice] jk2_init() Found child 6188 in scoreboard slot 9
+[Wed Dec 17 08:48:57 2025] [notice] prefork.c: Child process 6509 is entering scoreboard slot 5
+[Wed Dec 17 08:55:50 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 09:01:47 2025] [notice] Server built: Dec 17 2025 09:01:47
+[Wed Dec 17 09:11:01 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 09:20:10 2025] [notice] jk2_init() Found child 6188 in scoreboard slot 5
+[Wed Dec 17 09:29:23 2025] [notice] jk2_init() Found child 6315 in scoreboard slot 1
+[Wed Dec 17 09:36:13 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 09:41:15 2025] [notice] Server built: Dec 17 2025 09:41:15
+[Wed Dec 17 09:49:40 2025] [notice] Server built: Dec 17 2025 09:49:40
+[Wed Dec 17 09:57:21 2025] [notice] prefork.c: Child process 6165 is entering scoreboard slot 2

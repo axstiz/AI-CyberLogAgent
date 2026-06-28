@@ -1,0 +1,101 @@
+[Wed Dec 17 01:10:08 2025] [notice] prefork.c: Child process 6395 is entering scoreboard slot 3
+[Wed Dec 17 01:10:16 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:10:19 2025] [notice] prefork.c: Child process 6965 is entering scoreboard slot 2
+[Wed Dec 17 01:10:24 2025] [notice] prefork.c: Child process 6004 is entering scoreboard slot 9
+[Wed Dec 17 01:10:27 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:10:43 2025] [error] Memory allocation failed for worker 6411
+[Wed Dec 17 01:10:51 2025] [error] Memory allocation failed for worker 6751
+[Wed Dec 17 01:10:55 2025] [error] Memory allocation failed for worker 6672
+[Wed Dec 17 01:11:00 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:11:03 2025] [notice] jk2_init() Found child 6778 in scoreboard slot 9
+[Wed Dec 17 01:11:07 2025] [notice] Server built: Dec 17 2025 01:11:07
+[Wed Dec 17 01:11:12 2025] [notice] Server built: Dec 17 2025 01:11:12
+[Wed Dec 17 01:11:14 2025] [notice] prefork.c: Child process 6711 is entering scoreboard slot 2
+[Wed Dec 17 01:11:19 2025] [notice] prefork.c: Child process 7000 is entering scoreboard slot 1
+[Wed Dec 17 01:11:29 2025] [notice] prefork.c: Child process 6633 is entering scoreboard slot 2
+[Wed Dec 17 01:11:42 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:11:45 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:11:55 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:12:00 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:12:07 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:12:16 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:12:19 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:12:31 2025] [error] Permission denied: user 'root' cannot access /admin
+[Wed Dec 17 01:12:39 2025] [error] Security violation: unauthorized access attempt to /config
+[Wed Dec 17 01:12:42 2025] [error] Security violation: unauthorized access attempt to /var/log
+[Wed Dec 17 01:12:51 2025] [error] Permission denied: user 'root' cannot access /admin
+[Wed Dec 17 01:12:57 2025] [error] Permission denied: user 'guest' cannot access /var/log
+[Wed Dec 17 01:13:07 2025] [error] Access forbidden for 195.168.215.85: insufficient privileges
+[Wed Dec 17 01:13:10 2025] [error] Security violation: unauthorized access attempt to /var/log
+[Wed Dec 17 01:13:19 2025] [error] Security violation: unauthorized access attempt to /var/log
+[Wed Dec 17 01:13:25 2025] [error] Security violation: unauthorized access attempt to /etc/passwd
+[Wed Dec 17 01:13:28 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:13:38 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 01:13:41 2025] [error] mod_jk child workerEnv in critical error state 7
+[Wed Dec 17 01:13:48 2025] [error] Worker process 6806 failed to initialize
+[Wed Dec 17 01:13:58 2025] [error] mod_jk child workerEnv in critical error state 13
+[Wed Dec 17 01:14:00 2025] [error] Worker process 6981 failed to initialize
+[Wed Dec 17 01:14:05 2025] [error] All workers in error state, service degraded
+[Wed Dec 17 01:14:13 2025] [error] mod_jk child workerEnv in critical error state 10
+[Wed Dec 17 01:14:22 2025] [error] Worker process 6691 failed to initialize
+[Wed Dec 17 01:14:25 2025] [error] Worker process 6211 failed to initialize
+[Wed Dec 17 01:14:29 2025] [notice] Server built: Dec 17 2025 01:14:29
+[Wed Dec 17 01:14:32 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:14:41 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:14:58 2025] [error] Possible brute force attack from 153.47.150.149
+[Wed Dec 17 01:15:02 2025] [error] Authentication failed for user 'admin' from 4.254.173.156
+[Wed Dec 17 01:15:10 2025] [error] Possible brute force attack from 54.170.231.53
+[Wed Dec 17 01:15:15 2025] [error] Multiple failed login attempts detected from 201.53.121.233
+[Wed Dec 17 01:15:25 2025] [error] Possible brute force attack from 38.80.145.81
+[Wed Dec 17 01:15:32 2025] [error] Multiple failed login attempts detected from 167.140.18.62
+[Wed Dec 17 01:15:42 2025] [error] Authentication failed for user 'root' from 41.128.92.200
+[Wed Dec 17 01:15:49 2025] [error] Authentication failed for user 'root' from 118.68.251.172
+[Wed Dec 17 01:15:57 2025] [error] Multiple failed login attempts detected from 14.173.79.48
+[Wed Dec 17 01:16:04 2025] [error] Multiple failed login attempts detected from 81.159.17.217
+[Wed Dec 17 01:16:06 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:16:12 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:16:18 2025] [notice] prefork.c: Child process 6134 is entering scoreboard slot 10
+[Wed Dec 17 01:16:28 2025] [notice] prefork.c: Child process 6885 is entering scoreboard slot 4
+[Wed Dec 17 01:16:38 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:16:41 2025] [notice] Server built: Dec 17 2025 01:16:41
+[Wed Dec 17 01:16:47 2025] [notice] jk2_init() Found child 6942 in scoreboard slot 7
+[Wed Dec 17 01:16:56 2025] [notice] prefork.c: Child process 6287 is entering scoreboard slot 9
+[Wed Dec 17 01:17:10 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:17:20 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:17:28 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:17:36 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:17:46 2025] [notice] prefork.c: Child process 6107 is entering scoreboard slot 8
+[Wed Dec 17 01:17:56 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:18:00 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:18:05 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:18:14 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:18:18 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:18:24 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:18:33 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:18:42 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:18:46 2025] [notice] jk2_init() Found child 6327 in scoreboard slot 6
+[Wed Dec 17 01:18:52 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:19:00 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:19:04 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:19:07 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:19:12 2025] [notice] Server built: Dec 17 2025 01:19:12
+[Wed Dec 17 01:19:16 2025] [error] Possible brute force attack from 184.23.127.148
+[Wed Dec 17 01:19:23 2025] [error] Authentication failed for user 'root' from 73.32.233.151
+[Wed Dec 17 01:19:31 2025] [error] Authentication failed for user 'admin' from 161.147.243.89
+[Wed Dec 17 01:19:33 2025] [error] Possible brute force attack from 194.87.103.238
+[Wed Dec 17 01:19:38 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:19:40 2025] [notice] Server built: Dec 17 2025 01:19:40
+[Wed Dec 17 01:19:47 2025] [notice] jk2_init() Found child 6053 in scoreboard slot 7
+[Wed Dec 17 01:19:49 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:19:52 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:20:01 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:20:11 2025] [crit] Segmentation fault in worker process 6997
+[Wed Dec 17 01:20:21 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 01:20:25 2025] [crit] Segmentation fault in worker process 6332
+[Wed Dec 17 01:20:34 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 01:20:44 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 01:20:54 2025] [crit] Segmentation fault in worker process 6111
+[Wed Dec 17 01:21:00 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 01:21:09 2025] [crit] Fatal error in module mod_jk, shutting down
+[Wed Dec 17 01:21:19 2025] [crit] Child process 6393 terminated by signal 15
+[Wed Dec 17 01:21:24 2025] [notice] jk2_init() Found child 6923 in scoreboard slot 4

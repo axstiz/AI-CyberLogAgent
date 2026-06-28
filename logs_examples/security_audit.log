@@ -1,0 +1,112 @@
+[Wed Dec 17 01:10:22 2025] [error] Multiple failed login attempts detected from 28.230.125.219
+[Wed Dec 17 01:10:26 2025] [error] Authentication failed for user 'user' from 214.140.81.2
+[Wed Dec 17 01:10:26 2025] [notice] prefork.c: Child process 6481 is entering scoreboard slot 9
+[Wed Dec 17 01:10:31 2025] [error] Multiple failed login attempts detected from 244.74.82.220
+[Wed Dec 17 01:10:45 2025] [notice] prefork.c: Child process 6182 is entering scoreboard slot 8
+[Wed Dec 17 01:10:51 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:10:53 2025] [error] Authentication failed for user 'admin' from 195.77.167.221
+[Wed Dec 17 01:11:12 2025] [notice] jk2_init() Found child 6941 in scoreboard slot 10
+[Wed Dec 17 01:11:13 2025] [error] Authentication failed for user 'guest' from 108.239.219.227
+[Wed Dec 17 01:11:18 2025] [error] Multiple failed login attempts detected from 88.50.61.74
+[Wed Dec 17 01:11:32 2025] [error] Multiple failed login attempts detected from 158.228.126.232
+[Wed Dec 17 01:11:36 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:11:45 2025] [error] Multiple failed login attempts detected from 176.6.20.16
+[Wed Dec 17 01:11:54 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:12:13 2025] [error] Possible brute force attack from 32.40.163.2
+[Wed Dec 17 01:12:16 2025] [notice] jk2_init() Found child 6242 in scoreboard slot 7
+[Wed Dec 17 01:12:28 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:12:38 2025] [error] Possible brute force attack from 138.136.214.238
+[Wed Dec 17 01:12:49 2025] [error] Authentication failed for user 'admin' from 120.164.214.92
+[Wed Dec 17 01:12:53 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:12:59 2025] [error] Multiple failed login attempts detected from 13.34.39.168
+[Wed Dec 17 01:13:19 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:13:20 2025] [error] Multiple failed login attempts detected from 26.164.137.64
+[Wed Dec 17 01:13:20 2025] [notice] prefork.c: Child process 6083 is entering scoreboard slot 7
+[Wed Dec 17 01:13:24 2025] [notice] jk2_init() Found child 6339 in scoreboard slot 7
+[Wed Dec 17 01:13:49 2025] [error] Possible brute force attack from 146.172.26.240
+[Wed Dec 17 01:13:54 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:14:01 2025] [error] Multiple failed login attempts detected from 134.162.68.48
+[Wed Dec 17 01:14:12 2025] [notice] Server built: Dec 17 2025 01:14:12
+[Wed Dec 17 01:14:14 2025] [error] Multiple failed login attempts detected from 76.113.138.236
+[Wed Dec 17 01:14:37 2025] [notice] Server built: Dec 17 2025 01:14:37
+[Wed Dec 17 01:14:38 2025] [error] Possible brute force attack from 33.226.32.238
+[Wed Dec 17 01:15:00 2025] [notice] jk2_init() Found child 6553 in scoreboard slot 10
+[Wed Dec 17 01:15:06 2025] [error] Authentication failed for user 'root' from 9.156.68.49
+[Wed Dec 17 01:15:07 2025] [notice] prefork.c: Child process 6031 is entering scoreboard slot 5
+[Wed Dec 17 01:15:08 2025] [error] Possible brute force attack from 214.5.171.133
+[Wed Dec 17 01:15:08 2025] [notice] Server built: Dec 17 2025 01:15:08
+[Wed Dec 17 01:15:14 2025] [error] Authentication failed for user 'root' from 251.58.178.3
+[Wed Dec 17 01:15:22 2025] [notice] jk2_init() Found child 6382 in scoreboard slot 6
+[Wed Dec 17 01:15:30 2025] [error] Authentication failed for user 'user' from 28.94.96.159
+[Wed Dec 17 01:15:38 2025] [notice] jk2_init() Found child 6520 in scoreboard slot 7
+[Wed Dec 17 01:15:42 2025] [error] Multiple failed login attempts detected from 175.180.170.102
+[Wed Dec 17 01:16:02 2025] [error] Multiple failed login attempts detected from 29.108.42.249
+[Wed Dec 17 01:16:03 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:16:12 2025] [error] Multiple failed login attempts detected from 203.117.90.180
+[Wed Dec 17 01:16:29 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:16:41 2025] [error] Multiple failed login attempts detected from 130.16.10.84
+[Wed Dec 17 01:16:52 2025] [error] Possible brute force attack from 52.156.110.214
+[Wed Dec 17 01:16:56 2025] [notice] Server built: Dec 17 2025 01:16:56
+[Wed Dec 17 01:17:16 2025] [notice] prefork.c: Child process 6188 is entering scoreboard slot 7
+[Wed Dec 17 01:17:18 2025] [error] Possible brute force attack from 104.97.144.130
+[Wed Dec 17 01:17:28 2025] [error] Authentication failed for user 'guest' from 186.207.40.173
+[Wed Dec 17 01:17:38 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:17:49 2025] [error] Possible brute force attack from 251.195.102.166
+[Wed Dec 17 01:17:57 2025] [error] Permission denied: user 'root' cannot access /config
+[Wed Dec 17 01:17:57 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:18:06 2025] [notice] prefork.c: Child process 6225 is entering scoreboard slot 3
+[Wed Dec 17 01:18:11 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:18:22 2025] [error] Access forbidden for 210.138.174.76: insufficient privileges
+[Wed Dec 17 01:18:36 2025] [error] Access forbidden for 104.230.247.180: insufficient privileges
+[Wed Dec 17 01:18:40 2025] [error] Security violation: unauthorized access attempt to /config
+[Wed Dec 17 01:18:41 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
+[Wed Dec 17 01:18:42 2025] [notice] prefork.c: Child process 6536 is entering scoreboard slot 8
+[Wed Dec 17 01:18:44 2025] [notice] prefork.c: Child process 6010 is entering scoreboard slot 10
+[Wed Dec 17 01:19:00 2025] [notice] jk2_init() Found child 6860 in scoreboard slot 7
+[Wed Dec 17 01:19:05 2025] [error] Security violation: unauthorized access attempt to /admin
+[Wed Dec 17 01:19:13 2025] [notice] jk2_init() Found child 6898 in scoreboard slot 10
+[Wed Dec 17 01:19:21 2025] [notice] prefork.c: Child process 6790 is entering scoreboard slot 4
+[Wed Dec 17 01:19:34 2025] [error] Access forbidden for 99.183.133.160: insufficient privileges
+[Wed Dec 17 01:19:37 2025] [error] Access forbidden for 102.6.113.12: insufficient privileges
+[Wed Dec 17 01:19:44 2025] [notice] Server built: Dec 17 2025 01:19:44
+[Wed Dec 17 01:19:50 2025] [error] Security violation: unauthorized access attempt to /var/log
+[Wed Dec 17 01:20:03 2025] [notice] prefork.c: Child process 6494 is entering scoreboard slot 9
+[Wed Dec 17 01:20:05 2025] [notice] Server built: Dec 17 2025 01:20:05
+[Wed Dec 17 01:20:06 2025] [error] Access forbidden for 126.235.211.225: insufficient privileges
+[Wed Dec 17 01:20:27 2025] [error] Security violation: unauthorized access attempt to /config
+[Wed Dec 17 01:20:27 2025] [notice] jk2_init() Found child 6770 in scoreboard slot 4
+[Wed Dec 17 01:20:32 2025] [notice] jk2_init() Found child 6272 in scoreboard slot 2
+[Wed Dec 17 01:20:34 2025] [error] Access forbidden for 162.210.200.223: insufficient privileges
+[Wed Dec 17 01:20:35 2025] [notice] Server built: Dec 17 2025 01:20:35
+[Wed Dec 17 01:20:37 2025] [error] Access forbidden for 203.186.204.60: insufficient privileges
+[Wed Dec 17 01:20:49 2025] [notice] Server built: Dec 17 2025 01:20:49
+[Wed Dec 17 01:21:00 2025] [error] Access forbidden for 246.141.116.149: insufficient privileges
+[Wed Dec 17 01:21:06 2025] [error] Security violation: unauthorized access attempt to /var/log
+[Wed Dec 17 01:21:19 2025] [notice] workerEnv.init() ok /etc/httpd/conf/workers2.properties
+[Wed Dec 17 01:21:23 2025] [error] Security violation: unauthorized access attempt to /config
+[Wed Dec 17 01:21:34 2025] [notice] prefork.c: Child process 6341 is entering scoreboard slot 6
+[Wed Dec 17 01:21:41 2025] [error] Security violation: unauthorized access attempt to /admin
+[Wed Dec 17 01:21:45 2025] [error] Access forbidden for 245.126.17.65: insufficient privileges
+[Wed Dec 17 01:21:54 2025] [error] Security violation: unauthorized access attempt to /admin
+[Wed Dec 17 01:21:59 2025] [notice] prefork.c: Child process 6238 is entering scoreboard slot 4
+[Wed Dec 17 01:22:18 2025] [error] Security violation: unauthorized access attempt to /config
+[Wed Dec 17 01:22:24 2025] [notice] Server built: Dec 17 2025 01:22:24
+[Wed Dec 17 01:22:43 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:22:44 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:23:07 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:23:26 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:23:46 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:23:47 2025] [crit] File descriptor limit reached, cannot accept connections
+[Wed Dec 17 01:24:17 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:24:42 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:24:53 2025] [crit] Thread pool exhausted, queuing requests
+[Wed Dec 17 01:25:01 2025] [crit] Server reached MaxClients setting, refusing new connections
+[Wed Dec 17 01:25:16 2025] [notice] prefork.c: Child process 6889 is entering scoreboard slot 8
+[Wed Dec 17 01:25:49 2025] [error] Unable to establish connection to worker node
+[Wed Dec 17 01:25:53 2025] [error] Unable to establish connection to worker node
+[Wed Dec 17 01:26:06 2025] [error] Connection to backend server failed after 10 attempts
+[Wed Dec 17 01:26:15 2025] [error] Connection to backend server failed after 3 attempts
+[Wed Dec 17 01:26:39 2025] [error] Backend connection pool exhausted
+[Wed Dec 17 01:26:48 2025] [error] Backend connection pool exhausted
+[Wed Dec 17 01:27:05 2025] [notice] prefork.c: Child process 6118 is entering scoreboard slot 5
+[Wed Dec 17 01:27:32 2025] [notice] Apache/2.2.3 configured -- resuming normal operations
